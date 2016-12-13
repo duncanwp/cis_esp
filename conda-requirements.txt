@@ -3,5 +3,5 @@
 
 gdal
 django
-jinja
+jinja2
 psycopg2
