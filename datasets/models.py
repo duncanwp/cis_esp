@@ -29,7 +29,7 @@ class Dataset(models.Model):
     # Human readable region description
     region = models.CharField(max_length=50, blank=True)
     # The actual polygon
-    spatial_extent = models.MultiPolygonField()
+    spatial_extent = models.PolygonField()
 
     # Temporal extent
     time_start = models.DateTimeField()
@@ -112,6 +112,7 @@ class MeasurementFile(models.Model):
     measurement_dataset = models.ForeignKey('MeasurementDataset', on_delete=models.CASCADE)
     filename = models.CharField(max_length=250)
 
-    spatial_extent = models.MultiPolygonField()
+    # This is a generic Geometry field as it may be a line string (for aircraft), a point (for stations) or a Polygon
+    spatial_extent = models.GeometryField()
     time_start = models.DateTimeField()
     time_end = models.DateTimeField()
