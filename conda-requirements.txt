@@ -5,3 +5,6 @@ gdal
 django
 jinja2
 psycopg2
+
+# For loading data:
+# cis

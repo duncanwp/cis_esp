@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'landing',
-    'data_browser',
+    'datasets',
     'subset',
     'world'
 ]
