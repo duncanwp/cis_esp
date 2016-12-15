@@ -45,6 +45,9 @@ class Dataset(models.Model):
 
     public = models.BooleanField(default=False)
 
+    def __str__(self):
+        return "{}".format(self.name)
+
 
 class MeasurementDataset(models.Model):
     """
@@ -58,18 +61,27 @@ class MeasurementDataset(models.Model):
     CCN = 'CCN'
     CN = 'CN'
     N = 'N'
+    EC = 'EC'
+    TBC = 'TBC'
+    PBC = 'PBC'
 
     MEASUREMENT_TYPE_CHOICES = (
         (AOD, 'AOD'),
         (CCN, 'CCN'),
         (CN, 'CN'),
         (AOT, 'AOT'),
-        (N, 'Number concentration')
+        (N, 'Number concentration'),
+        (EC, 'Extinction Coefficient'),
+        (TBC, 'Total Backscatter Coefficient'),
+        (PBC, 'Perpendicular Backscatter Coefficient')
     )
     measurement_type = models.CharField(max_length=3, choices=MEASUREMENT_TYPE_CHOICES)
     instrument = models.CharField(max_length=50, blank=True)
 
     dataset = models.ForeignKey('Dataset', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "{}".format(self.get_measurement_type_display())
 
 
 class MeasurementVariable(models.Model):
@@ -79,6 +91,9 @@ class MeasurementVariable(models.Model):
     variable_name = models.CharField(max_length=50)
 
     measurement_dataset = models.ForeignKey('MeasurementDataset', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "{}".format(self.variable_name)
 
 
 class CCNMeasurementVariable(MeasurementVariable):
@@ -116,3 +131,6 @@ class MeasurementFile(models.Model):
     spatial_extent = models.GeometryField()
     time_start = models.DateTimeField()
     time_end = models.DateTimeField()
+
+    def __str__(self):
+        return "{}".format(self.filename)
