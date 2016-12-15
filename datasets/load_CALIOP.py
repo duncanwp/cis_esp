@@ -1,30 +1,21 @@
 from .models import Dataset, MeasurementFile, MeasurementDataset
 from datetime import datetime
 
-from django.contrib.gis.geos import GEOSGeometry
-
-
-def run(verbose=True):
-    pass
-    # TODO
-    # for f in files:
-    #     shp = read_caliop_met_file(f)
-    #     mf = MeasurementFile(spatial_extent=shp.wkt)
-    # d = Dataset()
-    # d.save()
-
 
 def load_caliop_data(dirpath, test_set=False):
     import glob
+    from .utils import GLOBAL_EXTENT
     from os.path import join
-    files = glob.iglob(join(dirpath, "*.hdf.met"))
+    from django.contrib.auth.models import User
+    files = glob.glob(join(dirpath, "*.hdf.met"))
 
     if test_set:
         files = files[::100]
 
     d = Dataset(time_start=datetime(2008,1,1,0,0,0), time_end=datetime(2008,12,31,0,0,0),
                 platform_type='SA', source='NASA', public=True, name='CALIOP L2 Aerosol Profile V4',
-                project_URL='https://www-calipso.larc.nasa.gov/resources/calips', region='Global')
+                project_URL='https://www-calipso.larc.nasa.gov/resources/calips', region='Global',
+                spatial_extent=GLOBAL_EXTENT.wkt, owner=User.objects.filter(username='duncan').first())
 
     d.save()
 
@@ -38,22 +29,21 @@ def load_caliop_data(dirpath, test_set=False):
 
     for f in files:
         mf = read_caliop_met_file(f)
+        mf.save()
         pbc.measurementfile_set.add(mf)
         tbc.measurementfile_set.add(mf)
-
-        mf.save()
 
 
 def read_caliop_met_file(filepath):
     import numpy as np
     from shapely.geometry import LineString, Polygon, MultiPoint
+    import dateutil.parser
     vals = {}
     _in = ''
 
     with open(filepath) as f:
 
         for line in f:
-            print(line)
             if len(line.split('=')) > 1:
                 key, val = line.split('=')
                 key = key.strip()
@@ -65,13 +55,13 @@ def read_caliop_met_file(filepath):
                         _in = 'longitude'
                     elif val == 'START_DATE':
                         _in = 'start_date'
-                    elif val == 'END_DATE':
+                    elif val == 'STOP_DATE':
                         _in = 'end_date'
                 elif key == 'END_OBJECT':
                     _in = ''
 
                 if _in.endswith('date') and key == 'VALUE':
-                    vals[_in] = datetime.strptime(val.strip('"'))
+                    vals[_in] = dateutil.parser.parse(val.strip('"'))
                 elif _in and key == 'VALUE':
                     vals[_in] = val.strip('(').strip(')').split(',')
 
