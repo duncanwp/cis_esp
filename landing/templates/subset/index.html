@@ -1,4 +1,10 @@
 {% extends "landing/header.html" %}
+
+{% block head %}
+{#    Bring in the media necassary for the form #}
+{{ form.media }}
+{% endblock %}
+
 {% block content %}
 <h4>Select the data to subset</h4>
 
