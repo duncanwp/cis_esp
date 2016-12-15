@@ -1,7 +1,27 @@
 {% extends "landing/header.html" %}
+{% load staticfiles%}
 {% block content %}
-<p>This is the body content...</p>
+<div class="row">
+  <br>
+  <center>
+  <h1>CIS Evaluation and Synthesis Platform (ESP)</h1>
+  </center>
+</div><hr>
 
+<div class="row">
+  <div class="col-sm-4">
+    <img src="{% static 'landing/img/step1.png' %}" class="img-responsive" alt="Step 1">
+      <h2><small>Evaluate</small></h2>
+  </div>
+  <div class="col-sm-4">
+    <img src="{% static 'landing/img/step2.png' %}" class="img-responsive" alt="Step 2">
+      <h2><small>Synthesize</small></h2>
+  </div>
+  <div class="col-sm-4">
+    <img src="{% static 'landing/img/step3.png' %}" class="img-responsive" alt="Step 3">
+      <h2><small>Analyse</small></h2>
+  </div>
+</div>
 {% include 'landing/includes/html_snippet.html' %}
 
 {% endblock %}
