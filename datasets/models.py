@@ -124,7 +124,7 @@ class MeasurementFile(models.Model):
     """
     A MeasurementFile is a reference to an actual file containing the MeasurementDataset that CIS can read.
     """
-    measurement_dataset = models.ForeignKey('MeasurementDataset', on_delete=models.CASCADE)
+    measurements = models.ManyToManyField(MeasurementDataset)
     filename = models.CharField(max_length=250)
 
     # This is a generic Geometry field as it may be a line string (for aircraft), a point (for stations) or a Polygon
