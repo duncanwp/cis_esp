@@ -8,3 +8,5 @@ psycopg2
 
 # For loading data:
 # cis
+
+# Also requires django-widget-tweaks from pypi

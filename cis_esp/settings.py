@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'landing',
     'datasets',
     'subset',
-    'world'
+    'world',
+    'widget_tweaks'
 ]
 
 MIDDLEWARE = [
