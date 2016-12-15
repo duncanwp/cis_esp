@@ -1,23 +1,16 @@
-from django.shortcuts import render
-from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect
 
 from .forms import DataSelection
 
 
-def index(request):
-    # if this is a POST request we need to process the form data
-    if request.method == 'POST':
-        # create a form instance and populate it with data from the request:
-        form = DataSelection(request.POST)
-        # check whether it's valid:
-        if form.is_valid():
-            # process the data in form.cleaned_data as required
-            # ...
-            # redirect to a new URL:
-            return HttpResponseRedirect('#')
+def index(request, template_name='subset/index.html'):
 
-    # if a GET (or any other method) we'll create a blank form
-    else:
-        form = DataSelection()
+    form = DataSelection(request.POST or None)
 
-    return render(request, 'subset/index.html', {'form': form})
+    if form.is_valid():
+        # process the data in form.cleaned_data as required
+        # ...
+        # redirect to a new URL:
+        return redirect('#')
+
+    return render(request, template_name, {'form': form})
