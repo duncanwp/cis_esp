@@ -2,11 +2,21 @@ from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 
 
+class Campaign(models.Model):
+    """
+    A Campaign (or mission) is a coordinated collection of datasets, perhaps from different platforms or different
+     retrievals.
+    """
+    name = models.CharField(max_length=20)
+
+
 class Dataset(models.Model):
     """
     A Dataset is a collection of files and variables from a specific platform (but possibly different sensors).
     """
     name = models.CharField(max_length=50)
+
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
     SATELLITE = 'SA'
     AIRCRAFT = 'AI'
@@ -78,7 +88,10 @@ class MeasurementDataset(models.Model):
     measurement_type = models.CharField(max_length=3, choices=MEASUREMENT_TYPE_CHOICES)
     instrument = models.CharField(max_length=50, blank=True)
 
-    dataset = models.ForeignKey('Dataset', on_delete=models.CASCADE)
+    # A file wildcard
+    files = models.CharField(max_length=250, blank=True)
+
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{}".format(self.get_measurement_type_display())
@@ -90,7 +103,7 @@ class MeasurementVariable(models.Model):
     """
     variable_name = models.CharField(max_length=50)
 
-    measurement_dataset = models.ForeignKey('MeasurementDataset', on_delete=models.CASCADE)
+    measurement_dataset = models.ForeignKey(MeasurementDataset, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{}".format(self.variable_name)

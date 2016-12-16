@@ -1,4 +1,4 @@
-from .models import Dataset, MeasurementFile, MeasurementDataset
+from datasets.models import Dataset, MeasurementFile, MeasurementDataset
 from datetime import datetime
 
 
@@ -35,8 +35,8 @@ def load_caliop_data(dirpath, test_set=False):
 
 
 def read_caliop_met_file(filepath):
+    from .utils import lat_lon_points_to_linestring
     import numpy as np
-    from shapely.geometry import LineString, Polygon, MultiPoint
     import dateutil.parser
     vals = {}
     _in = ''
@@ -65,14 +65,8 @@ def read_caliop_met_file(filepath):
                 elif _in and key == 'VALUE':
                     vals[_in] = val.strip('(').strip(')').split(',')
 
-    ndarr = np.array([vals['longitude'], vals['latitude']], dtype=np.float).T
-
-    # TODO: There is an issue here when reading points which cross the dateline. A quick google suggests that I should
-    #  define an offset projection to define the data in (so it's all on one 360 degree domain), then transform it.
-    # This is useful for plotting
-    # points = MultiPoint(ndarr).buffer(4)
-    points = MultiPoint(ndarr)
-    line = LineString(ndarr)
+    # Use this helper method to convert to linestring taking into account dateline crossing
+    line = lat_lon_points_to_linestring(np.array(vals['longitude'], dtype=np.float), np.array(vals['latitude'], dtype=np.float))
 
     mf = MeasurementFile(time_start=vals['start_date'], time_end=vals['end_date'],
                          spatial_extent=line.wkt, filename=filepath)
@@ -81,18 +75,13 @@ def read_caliop_met_file(filepath):
 
 
 def plot_test():
-    import matplotlib.pyplot as plt
-    import cartopy.crs as ccrs
-
-    # This is what I want out at the end. I could in principle create it directly, but I feel a bit happier creating the
-    #  intermediate obkject for now.
-
-    line = read_caliop_met_file("F:\Local Data\CAL_LID_L2_05kmAPro-Standard-V4-10.2007-12-31T23-51-28ZN.hdf.met")
+    from .utils import plot_shape
+    from shapely.wkt import loads
+    mf = read_caliop_met_file("/Users/watson-parris/Local data/2008_metfiles/CAL_LID_L2_05kmAPro-Standard-V4-10.2007-12-31T23-51-28ZN.hdf.met")
+    line = mf.spatial_extent
     print(line.wkt)
+    plot_shape(loads(line.wkt))
 
-    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=90))
-    ax.coastlines()
-    ax.set_global()
-    ax.add_geometries([line], ccrs.PlateCarree(), facecolor='orange', edgecolor='black')
 
-    plt.show()
+if __name__ == '__main__':
+    load_caliop_data('/Users/watson-parris/Local data/2008_metfiles', test_set=True)
