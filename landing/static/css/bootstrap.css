@@ -101,6 +101,8 @@ hr {
 pre {
   overflow: auto;
 }
+/*Set a default map height*/
+#mapid { height: 480px; }
 code,
 kbd,
 pre,

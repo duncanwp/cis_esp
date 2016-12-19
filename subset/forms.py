@@ -8,8 +8,9 @@ class DataSelection(forms.Form):
 
     # All of these need to be updated based on the above...
     variables = forms.ModelMultipleChoiceField(queryset=model.MeasurementVariable.objects.all())
-    start_date = forms.DateField(widget=forms.SelectDateWidget())
+
+    start_date = forms.DateField(widget=forms.SelectDateWidget(years=[d.year for d in model.MeasurementFile.objects.all().datetimes('time_start', 'year')]))
     end_date = forms.DateField(widget=forms.SelectDateWidget())
 
     # I'd like to restrict this to a rectangle somehow... and probably have the option for text entry
-    region = forms.PolygonField(widget=forms.OSMWidget(attrs={'map_width': 800, 'map_height': 500}))
+    # region = forms.PolygonField(widget=forms.OSMWidget(attrs={'map_width': 800, 'map_height': 500}))

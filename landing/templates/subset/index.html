@@ -1,13 +1,32 @@
 {% extends "landing/header.html" %}
 
 {% block head %}
-{#    Bring in the media necassary for the form #}
-{{ form.media }}
+    {#    Bring in the media necassary for the form #}
+    {{ form.media }}
+    {#  Bring in leaflet  #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
 {% endblock %}
 
 {% block content %}
-<h4>Select the data to subset</h4>
 
-{% include 'common/includes/generic_form.html' %}
+    <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+
+    <h4>Select the data to subset</h4>
+
+    {% include 'common/includes/generic_form.html' %}
+
+     <div id="mapid"></div>
+
+    <script type="text/javascript">
+        var mymap = L.map('mapid').setView([20, 0], 1.5);
+
+        L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+                    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                    maxZoom: 5,
+                    id: 'mapbox.satellite',
+                    accessToken: 'pk.eyJ1IjoiZHVuY2Fud3AiLCJhIjoiY2l3d2F2eHRkMDBsZjJ6cHJheWxhbDNtMyJ9.PzUwtNYFXI0CnqG6GHFMhw'
+                }).addTo(mymap);
+        L.geoJSON({{ geojsonFeature|safe }}).addTo(mymap);
+    </script>
 
 {% endblock %}
