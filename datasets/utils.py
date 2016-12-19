@@ -4,7 +4,7 @@ GLOBAL_EXTENT = sgeom.box(-180, -90, 180, 90)
 
 IDL = sgeom.LineString(((180, -90), (180, 90)))
 
-platform_shapes = {'Station': sgeom.Point, 'Ship': sgeom.LineString, 'Aircraft': sgeom.LineString,
+platform_shapes = {'Ground station': sgeom.Point, 'Ship': sgeom.LineString, 'Aircraft': sgeom.LineString,
                    'Global Model': sgeom.Polygon, 'Regional Model': sgeom.Polygon, 'Satellite': sgeom.MultiPoint}
 
 
@@ -154,6 +154,8 @@ def cis_object_to_shp(data, tolerance=0.1, platform_type=None):
             poly = lat_lon_points_to_polygon(lon.points, lat.points)
         elif shape == sgeom.LineString:
             poly = lat_lon_points_to_linestring(lon.points, lat.points)
+        elif platform_type == 'Ground station':
+            poly = shape(lon.points.flat[0], lat.points.flat[0])
         else:
             poly = shape(list(zip(lon.points.flat, lat.points.flat)))
 

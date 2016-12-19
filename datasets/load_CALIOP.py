@@ -1,4 +1,4 @@
-from datasets.models import Dataset, MeasurementFile, MeasurementDataset
+from datasets.models import Dataset, MeasurementFile, MeasurementType, Campaign
 from datetime import datetime
 
 
@@ -12,15 +12,16 @@ def load_caliop_data(dirpath, test_set=False):
     if test_set:
         files = files[::100]
 
-    d = Dataset(time_start=datetime(2008,1,1,0,0,0), time_end=datetime(2008,12,31,0,0,0),
-                platform_type='SA', source='NASA', public=True, name='CALIOP L2 Aerosol Profile V4',
-                project_URL='https://www-calipso.larc.nasa.gov/resources/calips', region='Global',
-                spatial_extent=GLOBAL_EXTENT.wkt, owner=User.objects.filter(username='duncan').first())
+    c, _ = Campaign.objects.get_or_create(name='CALIOP')
 
-    d.save()
+    d = Dataset.objects.create(time_start=datetime(2008,1,1,0,0,0), time_end=datetime(2008,12,31,0,0,0),
+                               platform_type='SA', source='NASA', public=True, name='CALIOP L2 Aerosol Profile V4',
+                               project_URL='https://www-calipso.larc.nasa.gov/resources/calips', region='Global',
+                               spatial_extent=GLOBAL_EXTENT.wkt, owner=User.objects.filter(username='duncan').first(),
+                               campaign=c)
 
-    pbc = MeasurementDataset(measurement_type='PBC', dataset=d)
-    tbc = MeasurementDataset(measurement_type='TBC', dataset=d)
+    pbc = MeasurementType(measurement_type='PBC', dataset=d)
+    tbc = MeasurementType(measurement_type='TBC', dataset=d)
     pbc.save()
     tbc.save()
 

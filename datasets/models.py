@@ -14,7 +14,7 @@ class Dataset(models.Model):
     """
     A Dataset is a collection of files and variables from a specific platform (but possibly different sensors).
     """
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, null=True)
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
@@ -34,24 +34,24 @@ class Dataset(models.Model):
         (REGIONAL_MODEL, 'Regional Model')
     )
     platform_type = models.CharField(max_length=2, choices=PLATFORM_TYPE_CHOICES)
-    platform_name = models.CharField(max_length=50, blank=True)
+    platform_name = models.CharField(max_length=50, blank=True, null=True)
 
     # Human readable region description
-    region = models.CharField(max_length=50, blank=True)
+    region = models.CharField(max_length=50, blank=True, null=True)
     # The actual polygon
-    spatial_extent = models.PolygonField()
+    spatial_extent = models.PolygonField(null=True)
 
     # Temporal extent
-    time_start = models.DateTimeField()
-    time_end = models.DateTimeField()
+    time_start = models.DateTimeField(null=True)
+    time_end = models.DateTimeField(null=True)
 
     # Misc attributes
-    project_URL = models.CharField(max_length=50, blank=True)
-    principal_investigator = models.CharField(max_length=50, blank=True)
-    source = models.CharField(max_length=5050, blank=True)
+    project_URL = models.CharField(max_length=50, blank=True, null=True)
+    principal_investigator = models.CharField(max_length=50, blank=True, null=True)
+    source = models.CharField(max_length=5050, blank=True, null=True)
 
     # Deleting a user also deletes their datasets
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     public = models.BooleanField(default=False)
 
@@ -59,7 +59,7 @@ class Dataset(models.Model):
         return "{}".format(self.name)
 
 
-class MeasurementDataset(models.Model):
+class MeasurementType(models.Model):
     """
     A MeasurementDataset is a specific type of measurement (CCN, AOD, N10, etc...), which may have more than variable,
     and be stored in more than one file.
@@ -74,24 +74,33 @@ class MeasurementDataset(models.Model):
     EC = 'EC'
     TBC = 'TBC'
     PBC = 'PBC'
+    UNK = 'UNK'
+    SO4 = 'SO4'
+    BC = 'BC'
+    NSD = 'NSD'
 
     MEASUREMENT_TYPE_CHOICES = (
         (AOD, 'AOD'),
         (CCN, 'CCN'),
         (CN, 'CN'),
         (AOT, 'AOT'),
+        (NSD, 'NSD'),
+        (SO4, 'Sulphate Mass Concentration'),
+        (BC, 'Black Carbon Concentration'),
         (N, 'Number concentration'),
         (EC, 'Extinction Coefficient'),
         (TBC, 'Total Backscatter Coefficient'),
-        (PBC, 'Perpendicular Backscatter Coefficient')
+        (PBC, 'Perpendicular Backscatter Coefficient'),
+        (UNK, 'Unknown')
     )
-    measurement_type = models.CharField(max_length=3, choices=MEASUREMENT_TYPE_CHOICES)
+
+    measurement_type = models.CharField(max_length=3, choices=MEASUREMENT_TYPE_CHOICES, default=UNK)
     instrument = models.CharField(max_length=50, blank=True)
 
     # A file wildcard
     files = models.CharField(max_length=250, blank=True)
 
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return "{}".format(self.get_measurement_type_display())
@@ -103,7 +112,7 @@ class MeasurementVariable(models.Model):
     """
     variable_name = models.CharField(max_length=50)
 
-    measurement_dataset = models.ForeignKey(MeasurementDataset, on_delete=models.CASCADE)
+    measurement_type = models.ForeignKey(MeasurementType, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{}".format(self.variable_name)
@@ -114,7 +123,7 @@ class CCNMeasurementVariable(MeasurementVariable):
     A specific MeasurementVariable for dealing with CCN measurements which will have an associated supersaturation
     """
     ss_variable = models.CharField(max_length=50, blank=True)
-    fixed_ss = models.FloatField(blank=True)
+    fixed_ss = models.FloatField(blank=True, null=True)
 
 
 class CNMeasurementVariable(MeasurementVariable):
@@ -137,7 +146,9 @@ class MeasurementFile(models.Model):
     """
     A MeasurementFile is a reference to an actual file containing the MeasurementDataset that CIS can read.
     """
-    measurements = models.ManyToManyField(MeasurementDataset)
+    measurements = models.ManyToManyField(MeasurementType)
+
+    #TODO: Note that there are specific fields for filenames - I might want to use one of those
     filename = models.CharField(max_length=250)
 
     # This is a generic Geometry field as it may be a line string (for aircraft), a point (for stations) or a Polygon

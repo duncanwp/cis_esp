@@ -1,4 +1,4 @@
-from .models import Dataset, MeasurementFile, MeasurementDataset, MeasurementVariable, \
+from .models import Dataset, MeasurementFile, MeasurementType, MeasurementVariable, \
     CCNMeasurementVariable, Campaign
 from datetime import datetime
 import itertools
@@ -12,78 +12,67 @@ old_data_path = join(local_data, 'gassp_data', 'Level_2')
 data_path = join(local_data, 'gassp_data', 'Level_2_1')
 
 
-def new_platform(region, platform, label=None, **kwargs):
+def new_platform(region, platform, campaign=None, name=None, **kwargs):
     # Flatten the various measurement campaigns
     measurements = [m for k, ml in kwargs.items() for m in ml if ml is not None]
-    cp = Dataset(region=region, platform=platform, label=label)
-    cp.save()
-    cp.measurementdataset_set.add(*measurements)
+    cp, _ = Dataset.objects.get_or_create(region=region, platform_type=platform, name=name, campaign=campaign)
+    cp.measurementtype_set.add(*measurements)
     # cp.measurement_campaigns = measurements
     return cp
 
 
 # Campaign constructor
-def new_Campaign(name=None, region=None, platform=None, **kwargs):
-    campaign = Campaign(label=name)
-    campaign.save()
-    cp = new_platform(region, platform, **kwargs)
+def new_Campaign(name, region=None, platform=None, **kwargs):
+    campaign, _ = Campaign.objects.get_or_create(name=name)
+    cp = new_platform(region, platform, campaign=campaign, **kwargs)
     campaign.dataset_set.add(cp)
     return campaign
 
 
-# Campaign constructor
-def new_Campaign_with_multiple_platforms(platforms, name=None, **kwargs):
-    campaign = Campaign(label=name)
-    campaign.save()
-    campaign.campaign_platforms = platforms
-    return campaign
-
-
 def CNMeasurementDataset(files, variables):
-    # v = [MeasurementVariable(name=var) for var in variables.split(",")]
-    c = MeasurementDataset(files=files, type='cn')
-    # c.measurement_variables = v
-    return c
+    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CN)
+    v = [MeasurementVariable.objects.create(variable_name=var, measurement_type=mt) for var in variables.split(",")]
+    return mt
 
 
 def SO4MeasurementDataset(files, variables):
-    v = [MeasurementVariable(name=var) for var in variables.split(",")]
-    c = MeasurementDataset(files=files, type='so4')
-    c.measurement_variables = v
-    return c
+    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.SO4)
+    v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
+    mt.measurementvariable_set.add(*v, bulk=False)
+    return mt
 
 
 def BCMeasurementDataset(files, variables, campaign_platform):
-    v = [MeasurementVariable(name=var) for var in variables.split(",")]
-    c = MeasurementDataset(files=files, type='bc')
-    c.measurement_variables = v
-    c.campaign_platform = campaign_platform
-    return c
+    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.BC,
+                                                  dataset=campaign_platform)
+    v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
+    mt.measurementvariable_set.add(*v, bulk=False)
+    return mt
 
 
 def NSDMeasurementDataset(files, variables, campaign_platform):
-    v = [MeasurementVariable(name=var) for var in variables.split(",")]
-    c = MeasurementDataset(files=files, type='nsd')
-    c.measurement_variables = v
-    c.campaign_platform = campaign_platform
-    return c
+    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.NSD,
+                                                  dataset=campaign_platform)
+    v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
+    mt.measurementvariable_set.add(*v, bulk=False)
+    return mt
 
 
 def CCNMeasurementDataset(files, variables, fixed_ss=None, ss_variable=None):
+    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CCN)
     if ss_variable is not None:
-        v = [CCNMeasurementVariable(name=var, fixed_ss=fixed_ss, ss_variable=ss_var) for var, ss_var in
+        v = [CCNMeasurementVariable(variable_name=var, fixed_ss=fixed_ss, ss_variable=ss_var) for var, ss_var in
              zip(variables.split(","), ss_variable.split(","))]
     else:
-        v = [CCNMeasurementVariable(name=var, fixed_ss=fixed_ss) for var in variables.split(",")]
-    c = MeasurementDataset(files=files, type='ccn')
-    c.measurement_variables = v
-    return c
+        v = [CCNMeasurementVariable(variable_name=var, fixed_ss=fixed_ss) for var in variables.split(",")]
+    mt.measurementvariable_set.add(*v, bulk=False)
+    return mt
 
 
 def CCN_with_multiple_variables(files, variables):
-    c = MeasurementDataset(files=files, type='ccn')
-    c.measurement_variables = variables
-    return c
+    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CCN)
+    mt.measurementvariable_set.add(*variables, bulk=False)
+    return mt
 
 
 # # Note that there is also a MMR in here
@@ -149,10 +138,10 @@ cn_campaigns = [ace1_cn, appraise_cn, arctas_cn_pc3, arctas_cn_dc8, calnex_cn, c
 ace1_ccn = [
     # We actually only have RF11-28 - which causes problems when comparing to CN...
     CCN_with_multiple_variables(files=join(data_path, "ACE1", "ACE1_CCN*.nc"),
-                               variables=[CCNMeasurementVariable(name="CCN0_02", fixed_ss=0.02),
-                                          CCNMeasurementVariable(name="CCN0_08", fixed_ss=0.08),
-                                          CCNMeasurementVariable(name="CCN0_2", fixed_ss=0.2),
-                                          CCNMeasurementVariable(name="CCN0_6", fixed_ss=0.6)])]
+                               variables=[CCNMeasurementVariable(variable_name="CCN0_02", fixed_ss=0.02),
+                                          CCNMeasurementVariable(variable_name="CCN0_08", fixed_ss=0.08),
+                                          CCNMeasurementVariable(variable_name="CCN0_2", fixed_ss=0.2),
+                                          CCNMeasurementVariable(variable_name="CCN0_6", fixed_ss=0.6)])]
 
 amaze_ccn = [CCNMeasurementDataset(files=join(data_path, "AMAZE-08", "CCN*.nc"), variables="TOTAL_CCN",
                                     ss_variable="S")]
@@ -165,10 +154,10 @@ arcpac_ccn = [CCNMeasurementDataset(files=join(data_path, "ARCPAC2008", "CCN*.nc
 
 arctas_ccn_pc3 = [
     CCN_with_multiple_variables(files=join(data_path, "ARCTAS", "ARCTAS_CCN*.nc"),
-                                variables=[CCNMeasurementVariable(name="CCN_LT0_08", fixed_ss=0.04),
-                                           CCNMeasurementVariable(name="CCN0_08TO0_23", fixed_ss=0.155),
-                                           CCNMeasurementVariable(name="CCN0_23TO0_43", fixed_ss=0.33),
-                                           CCNMeasurementVariable(name="CCN0_43TO0_65", fixed_ss=0.54)])]
+                                variables=[CCNMeasurementVariable(variable_name="CCN_LT0_08", fixed_ss=0.04),
+                                           CCNMeasurementVariable(variable_name="CCN0_08TO0_23", fixed_ss=0.155),
+                                           CCNMeasurementVariable(variable_name="CCN0_23TO0_43", fixed_ss=0.33),
+                                           CCNMeasurementVariable(variable_name="CCN0_43TO0_65", fixed_ss=0.54)])]
 
 arctas_ccn_dc8 = [
     CCNMeasurementDataset(files=join(data_path, "ARCTAS", "CCN*.nc"),
@@ -210,24 +199,24 @@ intexb_ccn = [
 
 indoex_ccn = [
     CCN_with_multiple_variables(files=join(data_path, "INDOEX", "INDOEX_CCN*.nc"),
-                                variables=[CCNMeasurementVariable(name="CCN0_02_MEASURED", fixed_ss=0.02),
-                                           CCNMeasurementVariable(name="CCN0_08_MEASURED", fixed_ss=0.08),
-                                           CCNMeasurementVariable(name="CCN0_2_MEASURED", fixed_ss=0.2),
-                                           CCNMeasurementVariable(name="CCN0_6_MEASURED", fixed_ss=0.6)])]
+                                variables=[CCNMeasurementVariable(variable_name="CCN0_02_MEASURED", fixed_ss=0.02),
+                                           CCNMeasurementVariable(variable_name="CCN0_08_MEASURED", fixed_ss=0.08),
+                                           CCNMeasurementVariable(variable_name="CCN0_2_MEASURED", fixed_ss=0.2),
+                                           CCNMeasurementVariable(variable_name="CCN0_6_MEASURED", fixed_ss=0.6)])]
 
 mirage_ccn = [
     CCN_with_multiple_variables(files=join(data_path, "MIRAGE", "MIRAGE_CCN*.nc"),
-                                variables=[CCNMeasurementVariable(name="CCN0_08TO0_13", ss_variable="SSC_PERCENT"),
-                                           CCNMeasurementVariable(name="CCN0_13TO0_18", ss_variable="SSC_PERCENT"),
-                                           CCNMeasurementVariable(name="CCN0_18TO0_23", ss_variable="SSC_PERCENT")])]
+                                variables=[CCNMeasurementVariable(variable_name="CCN0_08TO0_13", ss_variable="SSC_PERCENT"),
+                                           CCNMeasurementVariable(variable_name="CCN0_13TO0_18", ss_variable="SSC_PERCENT"),
+                                           CCNMeasurementVariable(variable_name="CCN0_18TO0_23", ss_variable="SSC_PERCENT")])]
 
 icealot_ccn = [CCNMeasurementDataset(files=join(data_path, "ICEALOT", "CCNpmel*.nc"), variables="CCN_N",
                                       ss_variable="CCNSS")]
 
 pase_ccn = [
     CCN_with_multiple_variables(files=join(data_path, "PASE", "PASE_CCN*.nc"),
-                                variables=[CCNMeasurementVariable(name="CCN0_2", fixed_ss=0.2),
-                                           CCNMeasurementVariable(name="CCN0_04", fixed_ss=0.04)])]
+                                variables=[CCNMeasurementVariable(variable_name="CCN0_2", fixed_ss=0.2),
+                                           CCNMeasurementVariable(variable_name="CCN0_04", fixed_ss=0.04)])]
 
 polarstern_ccn = [
     CCNMeasurementDataset(files=join(data_path, "Polarstern", "CCN*.nc"), variables="CCN", ss_variable="D50")]
@@ -253,8 +242,8 @@ trompex_ccn = [CCNMeasurementDataset(files=join(data_path, "TROMPEX", "faam-ccnr
 
 vocals_ccn = [
     CCN_with_multiple_variables(files=join(data_path, "VOCALS", "VOCALS_CCN*.nc"),
-                                variables=[CCNMeasurementVariable(name="CCNLT0_3", fixed_ss=0.15),
-                                           CCNMeasurementVariable(name="CCNGT0_8", fixed_ss=1.0)])]
+                                variables=[CCNMeasurementVariable(variable_name="CCNLT0_3", fixed_ss=0.15),
+                                           CCNMeasurementVariable(variable_name="CCNGT0_8", fixed_ss=1.0)])]
 
 vocals_faam_ccn = [
     CCNMeasurementDataset(files=join(data_path, "VOCALS", "faam-ccnrack*.nc"), variables="CCN_COLA,CCN_COLB",
@@ -310,111 +299,141 @@ so4_campaigns = [accacia_so4, accacia_so4_ship, arctas_so4_dc8, arctas_so4_pc3, 
                  vocals_so4_faam, vocals_so4_c130, vocals_so4_ship, intexa_so4, mirage_so4, pem_tropics_a_so4, pem_west_a_so4, pem_west_b_so4]
 
 
-ace1_ship = new_platform(region="NA", platform="ship", CN=[ace1_cn_ship], SO4=[ace1_so4_ship])
-ace1_air = new_platform(region="NA", platform="aircraft", CN=[ace1_cn], CCN=ace1_ccn)
-ace1 = new_Campaign_with_multiple_platforms([ace1_air, ace1_ship], "ACE1")
+ace1, _ = Campaign.objects.get_or_create(name="ACE1")
+ace1_ship = new_platform(region="NA", platform=Dataset.SHIP, CN=[ace1_cn_ship], SO4=[ace1_so4_ship], name="ACE1 Ship",
+                         campaign=ace1)
+ace1_air = new_platform(region="NA", platform=Dataset.AIRCRAFT, CN=[ace1_cn], CCN=ace1_ccn, name="ACE1 C-130",
+                        campaign=ace1)
 
-ace2 = new_Campaign("ACE2", platform="ship", region="EU", CN=[ace2_cn_ship], SO4=[ace2_so4_ship])
-accacia_ship = new_platform(label="ACCACIA_ship", platform="ship", region="Arctic", SO4=[accacia_so4_ship])
-accacia_aircraft = new_platform(label="ACCACIA_air", platform="aircraft", region="Arctic", SO4=[accacia_so4])
-accacia = new_Campaign_with_multiple_platforms([accacia_ship, accacia_aircraft], "ACCACIA")
+ace2 = new_Campaign("ACE2", platform=Dataset.SHIP, region="EU", CN=[ace2_cn_ship], SO4=[ace2_so4_ship])
 
-aceasia_ship = new_platform(region="EA", platform="ship", CN=[aceasia_cn_ship], SO4=[aceasia_so4_ship])
-aceasia_air = new_platform(region="EA", platform="aircraft", CN=[aceasia_cn_air], SO4=[aceasia_so4_air])
-aceasia = new_Campaign_with_multiple_platforms([aceasia_air, aceasia_ship], "ACEASIA")
+accacia, _ = Campaign.objects.get_or_create(name="ACCACIA")
+accacia_ship = new_platform(name="ACCACIA_ship", platform=Dataset.SHIP, region="Arctic", SO4=[accacia_so4_ship],
+                            campaign=accacia)
+accacia_aircraft = new_platform(name="ACCACIA_air", platform=Dataset.AIRCRAFT, region="Arctic", SO4=[accacia_so4],
+                                campaign=accacia)
 
-aegean_game = new_Campaign("AEGEAN-GAME", platform="aircraft", region="EU", SO4=[aegean_game_so4])
-aforce = new_Campaign("A-FORCE", platform="aircraft", CN=[aforce_cn])
-amaze = new_Campaign("AMAZE-08", CCN=amaze_ccn, platform="station", region="SA")
-amma = new_Campaign("AMMA", platform="aircraft", region="AF", SO4=[amma_so4])
-amf_cape_cod = new_platform(region="NA", platform="station",label="CapeCod")
-amf_manacapuru = new_platform(region="SA", platform="station", label="Manacapuru")
-amf_stations = new_Campaign_with_multiple_platforms([amf_cape_cod, amf_manacapuru], "AMF_stations")
+aceasia, _ = Campaign.objects.get_or_create(name="ACEASIA")
+aceasia_ship = new_platform(region="EA", platform=Dataset.SHIP, CN=[aceasia_cn_ship], SO4=[aceasia_so4_ship],
+                            campaign=aceasia)
+aceasia_air = new_platform(region="EA", platform=Dataset.AIRCRAFT, CN=[aceasia_cn_air], SO4=[aceasia_so4_air],
+                           campaign=aceasia)
 
-aoe_1996 = new_Campaign("AOE1996", platform="ship", region="Arctic")
-aoe_2001 = new_Campaign("AOE2001", platform="ship", region="Arctic")
-appraise = new_Campaign("APPRAISE", CN=[appraise_cn], CCN=appraise_ccn)
+aegean_game = new_Campaign("AEGEAN-GAME", platform=Dataset.AIRCRAFT, region="EU", SO4=[aegean_game_so4])
+aforce = new_Campaign("A-FORCE", platform=Dataset.AIRCRAFT, CN=[aforce_cn])
+amaze = new_Campaign("AMAZE-08", CCN=amaze_ccn, platform=Dataset.GROUND_STATION, region="SA")
+amma = new_Campaign("AMMA", platform=Dataset.AIRCRAFT, region="AF", SO4=[amma_so4])
 
-arcpac = new_Campaign("ARCPAC2008", CCN=arcpac_ccn, SO4=[arcpac_so4], CN=[arcpac_cn])
-
-arctas_pc3 = new_platform(platform="aircraft", region="NA", label="PC3", CN=[arctas_cn_pc3], CCN=arctas_ccn_pc3, SO4=[arctas_so4_pc3])
-arctas_dc8 = new_platform(platform="aircraft", region="NA", label="DC8", CN=[arctas_cn_dc8], CCN=arctas_ccn_dc8, SO4=[arctas_so4_dc8])
-arctas = new_Campaign_with_multiple_platforms([arctas_pc3, arctas_dc8], "ARCTAS")
-
-bird_island = new_Campaign("BirdIsland", platform="station")
-bortas = new_Campaign("BORTAS", platform="aircraft", SO4=[bortas_so4])
-
-calnex_air = new_platform(region="NA", platform="aircraft", CN=[calnex_cn], CCN=calnex_ccn_air, SO4=[calnex_so4], label="CALNEX_air")
-calnex_ship = new_platform(region="NA", platform="ship", CN=[calnex_cn_ship], CCN=calnex_ccn_ship, SO4=[calnex_so4_ship], label="CALNEX_ship")
-calnex = new_Campaign_with_multiple_platforms([calnex_air, calnex_ship], "CALNEX")
-
-# care_beijing = new_Campaign("CAREBeijing", platform="station", region="EA", CN=[care_beijing_cn], CCN=care_beijing_ccn)
-care_beijing = new_Campaign("CAREBeijing", platform="station", region="EA", CCN=care_beijing_ccn)
-caribic = new_Campaign("CARIBIC", platform="aircraft", region="AT", CN=[caribic_cn])
-carriba = new_Campaign("CARRIBA", platform="station", CCN=carriba_ccn)
-cast = new_Campaign("CAST", platform="aircraft")
-clace = new_Campaign("CLACE6", CCN=clace_ccn, platform='station', region='EU')
-cope = new_Campaign("COPE", platform="aircraft", SO4=[cope_so4])
-cops = new_Campaign("COPS", platform="station")
-
-dc3_dc8 = new_platform(label="DC8", platform="aircraft", region="NA", CN=[dc3_cn_dc8], CCN=dc3_ccn_dc8, SO4=[dc3_so4])
-dc3_falcon = new_platform(label="Falcon", platform="aircraft", region="NA", CN=[dc3_cn_falcon])
-dc3 = new_Campaign_with_multiple_platforms([dc3_dc8, dc3_falcon], "DC3")
-
-discoveraq = new_Campaign("DISCOVERAQ", platform="aircraft", SO4=[discoveraq_so4])
-em25 = new_Campaign("EM25", CCN=em25_ccn, platform="aircraft")
-environment_canada = new_Campaign("Environment_Canada", platform="station", region="NA")
-eucaari = new_Campaign("EUCAARI", CCN=eucaari_ccn, platform="aircraft", region="EU", SO4=[eucaari_so4])
-goamazon = new_Campaign("GoAmazon", CN=[goamazon_cn], CCN=goamazon_ccn, platform="station", region="SA")
-hippo = new_Campaign("HIPPO", platform="aircraft")
-holme_moss = new_Campaign("HolmeMoss", platform="station")
-icealot = new_Campaign("ICEALOT", CN=[icealot_cn], CCN=icealot_ccn, SO4=[icealot_so4], platform="ship", region="NA")
-indoex = new_Campaign("INDOEX", platform="aircraft", region="NA", CN=[indoex_cn], CCN=indoex_ccn)
-intexa = new_Campaign("INTEX-A", CN=[intexa_cn], SO4=[intexa_so4], platform="aircraft", region="NA")
-intexb = new_Campaign("INTEX-B", CN=[intexb_cn], CCN=intexb_ccn, SO4=[intexb_so4], platform="aircraft", region="NA")
-mamm = new_Campaign("MAMM", platform="aircraft")
-mirage = new_Campaign("MIRAGE", CN=[mirage_cn], CCN=mirage_ccn, SO4=[mirage_so4], platform="aircraft", region="NA")
-neaqs = new_Campaign("NEAQS2002", platform="ship")
-op3 = new_Campaign("OP3", platform="station", SO4=[op3_so4])
-pase = new_Campaign("PASE", CN=[pase_cn], CCN=pase_ccn, SO4=[pase_ams], platform="aircraft", region="NA")
-
-pem_tropics_a_dc8 = new_platform(label="DC8", platform="aircraft", region="NA", SO4=[pem_tropics_a_so4], CN=[pem_tropics_a_cn])
-pem_tropics_a_p3b = new_platform(label="P3B", platform="aircraft", region="NA", CN=[pem_tropics_a_cn_p3])
-pem_tropics_a = new_Campaign_with_multiple_platforms([pem_tropics_a_dc8, pem_tropics_a_p3b], "PEMTropicsA")
-
-pem_tropics_b_dc8 = new_platform(label="DC8", platform="aircraft", region="NA", CN=[pem_tropics_b_cn])
-pem_tropics_b_p3b = new_platform(label="P3B", platform="aircraft", region="NA", CN=[pem_tropics_b_cn_p3])
-pem_tropics_b = new_Campaign_with_multiple_platforms([pem_tropics_b_dc8, pem_tropics_b_p3b], "PEMTropicsB")
-
-pem_west_a = new_Campaign("PEMWestA", CN=[pem_west_a_cn], SO4=[pem_west_a_so4], platform='aircraft', region="NP")
-pem_west_b = new_Campaign("PEMWestB", SO4=[pem_west_b_so4], platform='aircraft', region="NP")
+amf_stations, _ = Campaign.objects.get_or_create(name="AMF_stations")
+amf_cape_cod = new_platform(region="NA", platform=Dataset.GROUND_STATION, name="CapeCod",
+                            campaign=amf_stations)
+amf_manacapuru = new_platform(region="SA", platform=Dataset.GROUND_STATION, name="Manacapuru",
+                              campaign=amf_stations)
 
 
-polarstern = new_Campaign("Polarstern", CCN=polarstern_ccn, platform="ship")
-# pride = new_Campaign("PRIDE", CN=[pride_cn], CCN=pride_ccn, platform="station", region="EA")
-pride = new_Campaign("PRIDE_PRD", CCN=pride_ccn, platform="station", region="EA")
-rhamble = new_Campaign("RHaMBLe", platform="ship")
-ronoco = new_Campaign("RONOCO", CN=[ronoco_cn], CCN=ronoco_ccn, SO4=[ronoco_so4], platform="aircraft", region="NA")
+aoe_1996 = new_Campaign("AOE1996", platform=Dataset.SHIP, region="Arctic")
+aoe_2001 = new_Campaign("AOE2001", platform=Dataset.SHIP, region="Arctic")
 
-seac4rs = new_Campaign("SEAC4RS", CN=[seac4rs_cn], CCN=seac4rs_ccn, SO4=[seac4rs_so4], platform="aircraft", region="NA")
+appraise = new_Campaign("APPRAISE", CN=[appraise_cn], CCN=appraise_ccn, platform=Dataset.AIRCRAFT)
 
-texaqs_ship = new_platform(region="NA", platform="ship", CN=[texaqs_cn_ship], CCN=texasqs_ccn_ship, SO4=[texaqs_so4_ship], label='TEXASQS_ship')
-texaqs_air = new_platform(region="NA", platform="aircraft", CN=[texaqs_cn], CCN=texaqs_ccn_air, SO4=[texaqs_so4], label='TEXASQS_air')
-texaqs = new_Campaign_with_multiple_platforms([texaqs_air, texaqs_ship], "TEXAQS2006")
+arcpac = new_Campaign("ARCPAC2008", CCN=arcpac_ccn, SO4=[arcpac_so4], CN=[arcpac_cn], platform=Dataset.AIRCRAFT)
 
-trace_a = new_Campaign("TRACEA", CN=[trace_a_cn], platform="aircraft")
-trace_p_dc8 = new_platform(region="EA", platform="aircraft", CN=[trace_p_cn_dc8], label='DC8')
-trace_p_p3b = new_platform(region="EA", platform="aircraft", CN=[trace_p_cn, trace_p_ucn], label='P3B')
-trace_p = new_Campaign_with_multiple_platforms([trace_p_dc8, trace_p_p3b], "TRACEP")
+arctas, _ = Campaign.objects.get_or_create(name="ARCTAS")
+arctas_pc3 = new_platform(platform=Dataset.AIRCRAFT, region="NA", name="PC3", CN=[arctas_cn_pc3], CCN=arctas_ccn_pc3, SO4=[arctas_so4_pc3],
+                          campaign=arctas)
+arctas_dc8 = new_platform(platform=Dataset.AIRCRAFT, region="NA", name="DC8", CN=[arctas_cn_dc8], CCN=arctas_ccn_dc8, SO4=[arctas_so4_dc8],
+                          campaign=arctas)
 
-trompex = new_Campaign("TROMPEX", CCN=trompex_ccn, platform="aircraft")
+bird_island = new_Campaign("BirdIsland", platform=Dataset.GROUND_STATION)
+bortas = new_Campaign("BORTAS", platform=Dataset.AIRCRAFT, SO4=[bortas_so4])
 
-vocals_c130 = new_platform(label="C-130", CN=[vocals_cn], CCN=vocals_ccn, SO4=[vocals_so4_c130], platform="aircraft", region="SA")
-vocals_faam = new_platform(label="FAAM", CN=[vocals_cn_faam], CCN=vocals_faam_ccn, SO4=[vocals_so4_faam], platform="aircraft", region="SA")
-vocals_ship = new_platform(label="ship", CN=[vocals_cn_ship], SO4=[vocals_so4_ship], platform="ship", region="SA")
-vocals = new_Campaign_with_multiple_platforms([vocals_faam, vocals_c130, vocals_ship], "VOCALS")
+calnex, _ = Campaign.objects.get_or_create(name="CALNEX")
+calnex_air = new_platform(region="NA", platform=Dataset.AIRCRAFT, CN=[calnex_cn], CCN=calnex_ccn_air, SO4=[calnex_so4], name="CALNEX_air",
+                          campaign=calnex)
+calnex_ship = new_platform(region="NA", platform=Dataset.SHIP, CN=[calnex_cn_ship], CCN=calnex_ccn_ship, SO4=[calnex_so4_ship], name="CALNEX_ship",
+                           campaign=calnex)
 
-weybourne = new_Campaign("Weybourne", platform="station")
+# care_beijing = new_Campaign("CAREBeijing", platform=Dataset.GROUND_STATION, region="EA", CN=[care_beijing_cn], CCN=care_beijing_ccn)
+care_beijing = new_Campaign("CAREBeijing", platform=Dataset.GROUND_STATION, region="EA", CCN=care_beijing_ccn)
+caribic = new_Campaign("CARIBIC", platform=Dataset.AIRCRAFT, region="AT", CN=[caribic_cn])
+carriba = new_Campaign("CARRIBA", platform=Dataset.GROUND_STATION, CCN=carriba_ccn)
+cast = new_Campaign("CAST", platform=Dataset.AIRCRAFT)
+clace = new_Campaign("CLACE6", CCN=clace_ccn, platform=Dataset.GROUND_STATION, region='EU')
+cope = new_Campaign("COPE", platform=Dataset.AIRCRAFT, SO4=[cope_so4])
+cops = new_Campaign("COPS", platform=Dataset.GROUND_STATION)
+
+dc3, _ = Campaign.objects.get_or_create(name="DC3")
+dc3_dc8 = new_platform(name="DC8", platform=Dataset.AIRCRAFT, region="NA", CN=[dc3_cn_dc8], CCN=dc3_ccn_dc8, SO4=[dc3_so4],
+                       campaign=dc3)
+dc3_falcon = new_platform(name="Falcon", platform=Dataset.AIRCRAFT, region="NA", CN=[dc3_cn_falcon],
+                          campaign=dc3)
+
+discoveraq = new_Campaign("DISCOVERAQ", platform=Dataset.AIRCRAFT, SO4=[discoveraq_so4])
+em25 = new_Campaign("EM25", CCN=em25_ccn, platform=Dataset.AIRCRAFT)
+environment_canada = new_Campaign("Environment_Canada", platform=Dataset.GROUND_STATION, region="NA")
+eucaari = new_Campaign("EUCAARI", CCN=eucaari_ccn, platform=Dataset.AIRCRAFT, region="EU", SO4=[eucaari_so4])
+goamazon = new_Campaign("GoAmazon", CN=[goamazon_cn], CCN=goamazon_ccn, platform=Dataset.GROUND_STATION, region="SA")
+hippo = new_Campaign("HIPPO", platform=Dataset.AIRCRAFT)
+holme_moss = new_Campaign("HolmeMoss", platform=Dataset.GROUND_STATION)
+icealot = new_Campaign("ICEALOT", CN=[icealot_cn], CCN=icealot_ccn, SO4=[icealot_so4], platform=Dataset.SHIP, region="NA")
+indoex = new_Campaign("INDOEX", platform=Dataset.AIRCRAFT, region="NA", CN=[indoex_cn], CCN=indoex_ccn)
+intexa = new_Campaign("INTEX-A", CN=[intexa_cn], SO4=[intexa_so4], platform=Dataset.AIRCRAFT, region="NA")
+intexb = new_Campaign("INTEX-B", CN=[intexb_cn], CCN=intexb_ccn, SO4=[intexb_so4], platform=Dataset.AIRCRAFT, region="NA")
+mamm = new_Campaign("MAMM", platform=Dataset.AIRCRAFT)
+mirage = new_Campaign("MIRAGE", CN=[mirage_cn], CCN=mirage_ccn, SO4=[mirage_so4], platform=Dataset.AIRCRAFT, region="NA")
+neaqs = new_Campaign("NEAQS2002", platform=Dataset.SHIP)
+op3 = new_Campaign("OP3", platform=Dataset.GROUND_STATION, SO4=[op3_so4])
+pase = new_Campaign("PASE", CN=[pase_cn], CCN=pase_ccn, SO4=[pase_ams], platform=Dataset.AIRCRAFT, region="NA")
+
+pem_tropics_a, _ = Campaign.objects.get_or_create(name="PEMTropicsA")
+pem_tropics_a_dc8 = new_platform(name="DC8", platform=Dataset.AIRCRAFT, region="NA", SO4=[pem_tropics_a_so4], CN=[pem_tropics_a_cn],
+                                 campaign=pem_tropics_a)
+pem_tropics_a_p3b = new_platform(name="P3B", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_a_cn_p3],
+                                 campaign=pem_tropics_a)
+
+pem_tropics_b, _ = Campaign.objects.get_or_create(name="PEMTropicsB")
+pem_tropics_b_dc8 = new_platform(name="DC8", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_b_cn],
+                                 campaign=pem_tropics_b)
+pem_tropics_b_p3b = new_platform(name="P3B", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_b_cn_p3],
+                                 campaign=pem_tropics_b)
+
+pem_west_a = new_Campaign("PEMWestA", CN=[pem_west_a_cn], SO4=[pem_west_a_so4], platform=Dataset.AIRCRAFT, region="NP")
+pem_west_b = new_Campaign("PEMWestB", SO4=[pem_west_b_so4], platform=Dataset.AIRCRAFT, region="NP")
+
+
+polarstern = new_Campaign("Polarstern", CCN=polarstern_ccn, platform=Dataset.SHIP)
+# pride = new_Campaign("PRIDE", CN=[pride_cn], CCN=pride_ccn, platform=Dataset.GROUND_STATION, region="EA")
+pride = new_Campaign("PRIDE_PRD", CCN=pride_ccn, platform=Dataset.GROUND_STATION, region="EA")
+rhamble = new_Campaign("RHaMBLe", platform=Dataset.SHIP)
+ronoco = new_Campaign("RONOCO", CN=[ronoco_cn], CCN=ronoco_ccn, SO4=[ronoco_so4], platform=Dataset.AIRCRAFT, region="NA")
+
+seac4rs = new_Campaign("SEAC4RS", CN=[seac4rs_cn], CCN=seac4rs_ccn, SO4=[seac4rs_so4], platform=Dataset.AIRCRAFT, region="NA")
+
+texaqs, _ = Campaign.objects.get_or_create(name="TEXAQS2006")
+texaqs_ship = new_platform(region="NA", platform=Dataset.SHIP, CN=[texaqs_cn_ship], CCN=texasqs_ccn_ship, SO4=[texaqs_so4_ship], name='TEXASQS_ship',
+                           campaign=texaqs)
+texaqs_air = new_platform(region="NA", platform=Dataset.AIRCRAFT, CN=[texaqs_cn], CCN=texaqs_ccn_air, SO4=[texaqs_so4], name='TEXASQS_air',
+                          campaign=texaqs)
+
+trace_a = new_Campaign("TRACEA", CN=[trace_a_cn], platform=Dataset.AIRCRAFT)
+
+trace_p, _ = Campaign.objects.get_or_create(name="TRACEP")
+trace_p_dc8 = new_platform(region="EA", platform=Dataset.AIRCRAFT, CN=[trace_p_cn_dc8], name='DC8',
+                           campaign=trace_p)
+trace_p_p3b = new_platform(region="EA", platform=Dataset.AIRCRAFT, CN=[trace_p_cn, trace_p_ucn], name='P3B',
+                           campaign=trace_p)
+
+trompex = new_Campaign("TROMPEX", CCN=trompex_ccn, platform=Dataset.AIRCRAFT)
+
+vocals, _ = Campaign.objects.get_or_create(name="VOCALS")
+vocals_c130 = new_platform(name="C-130", CN=[vocals_cn], CCN=vocals_ccn, SO4=[vocals_so4_c130], platform=Dataset.AIRCRAFT, region="SA",
+                           campaign=vocals)
+vocals_faam = new_platform(name="FAAM", CN=[vocals_cn_faam], CCN=vocals_faam_ccn, SO4=[vocals_so4_faam], platform=Dataset.AIRCRAFT, region="SA",
+                           campaign=vocals)
+vocals_ship = new_platform(name="ship", CN=[vocals_cn_ship], SO4=[vocals_so4_ship], platform=Dataset.SHIP, region="SA",
+                           campaign=vocals)
+
+weybourne = new_Campaign("Weybourne", platform=Dataset.GROUND_STATION)
 
 campaigns = [ace1,
              ace2,
@@ -477,41 +496,41 @@ campaigns = [ace1,
 
 # All NSD files and variables
 nsd_campaigns = [
-    NSDMeasurementDataset(campaign_platform=accacia.campaign_platforms[0], files=join(data_path, "ACCACIA", "DMPS*Ship*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=accacia.dataset_set.all()[0], files=join(data_path, "ACCACIA", "DMPS*Ship*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=ace1_air, files=join(data_path, "ACE1", "*_NSD_*.nc"), variables="NUMDIST_DMA_OPC"),
     NSDMeasurementDataset(campaign_platform=aceasia_air, files=join(data_path, "ACEASIA", "*_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=aegean_game.campaign_platforms[0], files=join(data_path, "AEGEAN-GAME", "SMPS_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=amaze.campaign_platforms[0], files=join(data_path, "AMAZE-08", "NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=aegean_game.dataset_set.all()[0], files=join(data_path, "AEGEAN-GAME", "SMPS_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=amaze.dataset_set.all()[0], files=join(data_path, "AMAZE-08", "NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=amf_cape_cod, files=join(data_path, "AMF_stations", "CapeCod", "SMPS.*.nc"),
                         variables="NSD"),
     NSDMeasurementDataset(campaign_platform=amf_manacapuru, files=join(data_path, "AMF_stations", "Manacapuru", "SMPS.*.nc"),
                         variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=aoe_1996.campaign_platforms[0], files=join(data_path, "AOE1996", "DMPS_AOE1996*.nc"), variables="NSD_DMPS"),
-    NSDMeasurementDataset(campaign_platform=aoe_2001.campaign_platforms[0], files=join(data_path, "AOE2001", "DMPS_AOE2001*.nc"), variables="NSD_DMPS"),
+    NSDMeasurementDataset(campaign_platform=aoe_1996.dataset_set.all()[0], files=join(data_path, "AOE1996", "DMPS_AOE1996*.nc"), variables="NSD_DMPS"),
+    NSDMeasurementDataset(campaign_platform=aoe_2001.dataset_set.all()[0], files=join(data_path, "AOE2001", "DMPS_AOE2001*.nc"), variables="NSD_DMPS"),
     # TODO: There should be SMPS data from the DC8 too - but it's not in the folder, only the integrated data
     NSDMeasurementDataset(campaign_platform=arctas_pc3, files=join(data_path, "ARCTAS", "ARCTAS_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=bird_island.campaign_platforms[0], files=join(data_path, "BirdIsland",
+    NSDMeasurementDataset(campaign_platform=bird_island.dataset_set.all()[0], files=join(data_path, "BirdIsland",
                                                          "BirdIsland_2010_Schmale_submicronaerosolsizedistribution.txt.nc"),
                         variables="NSD_SMPS"),
-    NSDMeasurementDataset(campaign_platform=bortas.campaign_platforms[0], files=join(data_path, "BORTAS", "SMPS_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=care_beijing.campaign_platforms[0], files=join(data_path, "CAREBeijing", "NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=clace.campaign_platforms[0], files=join(data_path, "CLACE6", "NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=cope.campaign_platforms[0], files=join(data_path, "COPE", "SMPS_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=cops.campaign_platforms[0], files=join(data_path, "COPS", "DMPS_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=environment_canada.campaign_platforms[0], files=join(data_path, "Environment_Canada", "*SMPS*.nc"),
+    NSDMeasurementDataset(campaign_platform=bortas.dataset_set.all()[0], files=join(data_path, "BORTAS", "SMPS_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=care_beijing.dataset_set.all()[0], files=join(data_path, "CAREBeijing", "NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=clace.dataset_set.all()[0], files=join(data_path, "CLACE6", "NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=cope.dataset_set.all()[0], files=join(data_path, "COPE", "SMPS_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=cops.dataset_set.all()[0], files=join(data_path, "COPS", "DMPS_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=environment_canada.dataset_set.all()[0], files=join(data_path, "Environment_Canada", "*SMPS*.nc"),
                         variables="SIZE_DISTRIBUTION"),
-    NSDMeasurementDataset(campaign_platform=indoex.campaign_platforms[0], files=join(data_path, "INDOEX", "*_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=intexa.campaign_platforms[0], files=join(data_path, "INTEX-A", "*_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=mirage.campaign_platforms[0], files=join(data_path, "MIRAGE", "*_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=op3.campaign_platforms[0], files=join(data_path, "OP3", "DMPS*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=pase.campaign_platforms[0], files=join(data_path, "PASE", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=indoex.dataset_set.all()[0], files=join(data_path, "INDOEX", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=intexa.dataset_set.all()[0], files=join(data_path, "INTEX-A", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=mirage.dataset_set.all()[0], files=join(data_path, "MIRAGE", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=op3.dataset_set.all()[0], files=join(data_path, "OP3", "DMPS*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=pase.dataset_set.all()[0], files=join(data_path, "PASE", "*_NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=pem_tropics_a_p3b, files=join(data_path, "PEMTropicsA", "*_NSD_*.nc"), variables="NSD"),
     # TODO: These files haven't been turned into a nice NSD yet, I suppose I could if I had the time or inclination...
     # NSDMeasurementDataset(campaign_platform=pem_tropics_b_dc8, files=join(data_path, "PEMTropicsB", "NSD_*.nc"), variables=???),
-    # NSDMeasurementDataset(campaign_platform=pem_west_b.campaign_platforms[0], files=join(data_path, "PEMWestB", "AerComp_*.nc"), variables=???)
+    # NSDMeasurementDataset(campaign_platform=pem_west_b.dataset_set.all()[0], files=join(data_path, "PEMWestB", "AerComp_*.nc"), variables=???)
     NSDMeasurementDataset(campaign_platform=pem_tropics_b_p3b, files=join(data_path, "PEMTropicsB", "*_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=pride.campaign_platforms[0], files=join(data_path, "PRIDE_PRD", "NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=rhamble.campaign_platforms[0], files=join(data_path, "RHaMBLe", "DMPS*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=pride.dataset_set.all()[0], files=join(data_path, "PRIDE_PRD", "NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=rhamble.dataset_set.all()[0], files=join(data_path, "RHaMBLe", "DMPS*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=vocals_c130, files=join(data_path, "VOCALS", "*_NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=vocals_faam, files=join(data_path, "VOCALS", "SMPS_VOCALS_*.nc"), variables="NSD")]
 
@@ -521,40 +540,103 @@ nsd_campaigns = [
 bc_campaigns = [
     BCMeasurementDataset(campaign_platform=accacia_ship, files=join(data_path, "ACCACIA", "SP2*Ship*.nc"), variables="BC_MASS"),
     BCMeasurementDataset(campaign_platform=accacia_aircraft, files=join(data_path, "ACCACIA", "SP2*FAAM*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=aforce.campaign_platforms[0], files=join(data_path, "A-FORCE", "SP2*.nc"), variables="BCMCSTP"),
+    BCMeasurementDataset(campaign_platform=aforce.dataset_set.all()[0], files=join(data_path, "A-FORCE", "SP2*.nc"), variables="BCMCSTP"),
     BCMeasurementDataset(campaign_platform=arctas_dc8, files=join(data_path, "ARCTAS", "SP2*.nc"), variables="BC_MASS_1013HPA_273K"),
     BCMeasurementDataset(campaign_platform=arctas_pc3, files=join(data_path, "ARCTAS", "ARCTAS_SP2*.nc"), variables="INCMASS"),
-    BCMeasurementDataset(campaign_platform=arcpac.campaign_platforms[0], files=join(data_path, "ARCPAC2008", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=bortas.campaign_platforms[0], files=join(data_path, "BORTAS", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=calnex.campaign_platforms[0], files=join(data_path, "CALNEX", "SP2_mrg*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=cope.campaign_platforms[0], files=join(data_path, "COPE", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=cast.campaign_platforms[0], files=join(data_path, "CAST", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=clace.campaign_platforms[0], files=join(data_path, "CLACE6", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=arcpac.dataset_set.all()[0], files=join(data_path, "ARCPAC2008", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=bortas.dataset_set.all()[0], files=join(data_path, "BORTAS", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=calnex.dataset_set.all()[0], files=join(data_path, "CALNEX", "SP2_mrg*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=cope.dataset_set.all()[0], files=join(data_path, "COPE", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=cast.dataset_set.all()[0], files=join(data_path, "CAST", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=clace.dataset_set.all()[0], files=join(data_path, "CLACE6", "SP2*.nc"), variables="BC_MASS"),
     BCMeasurementDataset(campaign_platform=dc3_falcon, files=join(data_path, "DC3", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=discoveraq.campaign_platforms[0], files=join(data_path, "DISCOVERAQ", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=eucaari.campaign_platforms[0], files=join(data_path, "EUCAARI", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=hippo.campaign_platforms[0], files=join(data_path, "HIPPO", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=holme_moss.campaign_platforms[0], files=join(data_path, "HolmeMoss", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=intexb.campaign_platforms[0], files=join(data_path, "INTEX-B", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=mamm.campaign_platforms[0], files=join(data_path, "MAMM", "SP2*.nc"), variables="BC_MASS"),
-    BCMeasurementDataset(campaign_platform=mirage.campaign_platforms[0], files=join(data_path, "MIRAGE", "MIRAGE_SP2*.nc"), variables="INCMASS"),
-    BCMeasurementDataset(campaign_platform=neaqs.campaign_platforms[0], files=join(data_path, "NEAQS2002", "NEAQS2002_carbon.nc"), variables="EC"),
-    BCMeasurementDataset(campaign_platform=seac4rs.campaign_platforms[0], files=join(data_path, "SEAC4RS", "HDSP2_*.nc"), variables="BC"),
-    BCMeasurementDataset(campaign_platform=texaqs.campaign_platforms[0], files=join(data_path, "TEXAQS2006", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=discoveraq.dataset_set.all()[0], files=join(data_path, "DISCOVERAQ", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=eucaari.dataset_set.all()[0], files=join(data_path, "EUCAARI", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=hippo.dataset_set.all()[0], files=join(data_path, "HIPPO", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=holme_moss.dataset_set.all()[0], files=join(data_path, "HolmeMoss", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=intexb.dataset_set.all()[0], files=join(data_path, "INTEX-B", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=mamm.dataset_set.all()[0], files=join(data_path, "MAMM", "SP2*.nc"), variables="BC_MASS"),
+    BCMeasurementDataset(campaign_platform=mirage.dataset_set.all()[0], files=join(data_path, "MIRAGE", "MIRAGE_SP2*.nc"), variables="INCMASS"),
+    BCMeasurementDataset(campaign_platform=neaqs.dataset_set.all()[0], files=join(data_path, "NEAQS2002", "NEAQS2002_carbon.nc"), variables="EC"),
+    BCMeasurementDataset(campaign_platform=seac4rs.dataset_set.all()[0], files=join(data_path, "SEAC4RS", "HDSP2_*.nc"), variables="BC"),
+    BCMeasurementDataset(campaign_platform=texaqs.dataset_set.all()[0], files=join(data_path, "TEXAQS2006", "SP2*.nc"), variables="BC_MASS"),
     BCMeasurementDataset(campaign_platform=trace_p_dc8, files=join(data_path, "TRACEP", "BC_*.nc"), variables="BC"),
     BCMeasurementDataset(campaign_platform=vocals_c130, files=join(data_path, "VOCALS", "VOCALS_SP2*.nc"), variables="INCMASS"),
-    BCMeasurementDataset(campaign_platform=weybourne.campaign_platforms[0], files=join(data_path, "Weybourne", "SP2*.nc"), variables="BC_MASS")]
+    BCMeasurementDataset(campaign_platform=weybourne.dataset_set.all()[0], files=join(data_path, "Weybourne", "SP2*.nc"), variables="BC_MASS")]
+
+
+# These files have no measurement data...
+broken_files = ['ARCTAS_AMS_RF02_20080327_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF11_20080622_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF12_20080624_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF13_20080626_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF14_20080626_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF15_20080628_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF16_20080629_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF17_20080630_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF18_20080702_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF19_20080703_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF20_20080706_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF21_20080707_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF22_20080709_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF23_20080710_r2ict_apr2012.nc',
+                'ARCTAS_AMS_RF24_20080712_r2ict_apr2012.nc',
+                'ARCTAS_SP2_RF11_20080622_r2ict_apr2012.nc',
+                'MIRAGE_AMS_20060322.154100_224100.PNI_plus.nc',
+                'VOCALS_AMS_20081025.062900_152500.PNI.nc',
+                'VOCALS_AMS_20081028.061800_151200.PNI.nc',
+                'MIRAGE_SP2_20060312.172600_013501.PNI_plus.nc',
+                'ACE1_NSD_RF11_11171995224801_11181995073133.nc',
+                'ACE1_NSD_RF12_11181995222509_11191995072145.nc',
+                'ACEASIA_PILS_20010401.234300_081330.PNI_plus.nc',
+                'ACEASIA_PILS_20010403.235800_085659.PNI_plus.nc',
+                'PASE_AMS_20070804.202300_021358.PNI_plus.nc',
+                # These have missing CNHot (N13 vol) measurements which breaks everything...
+                'INDOEX_CPC_RF01_0216_plus.nc',
+                'INDOEX_CPC_RF02_0218_plus.nc',
+                # Transit flight with no data
+                'PEMTropicsA_CPC_RF04_p3b_19960815_plus.nc',
+                'PEMTropicsA_CPC_RF07_p3b_19960824_plus.nc',
+                'PEMTropicsB_CPC_RF01_p3b_19990304_r0.nc',
+                'ACE1_NSD_RF33_12221995171406_12231995030924.nc',
+                'PEMTropicsA_NSD_RF04_p3b_19960815_plus.nc',
+                'PEMTropicsA_NSD_RF05_p3b_19960818_plus.nc',
+                'PEMTropicsA_NSD_RF06_p3b_19960821_plus.nc',
+                'PEMTropicsA_NSD_RF20_p3b_19960925_plus.nc',
+                'PEMTropicsA_NSD_RF21_p3b_19960926_plus.nc',
+                # No valid points...
+                'AerDen_pwa15090.m.nc',
+                'N_ACE1_NSD_RF01_10311995160522_11011995012858.nc']
 
 
 # Methods for actually reading the data
 def load_gassp_data():
     from cis import read_data
+    from django.contrib.gis.geos import GEOSGeometry
+    from glob import glob
+    from django.utils import timezone
     from .utils import cis_object_to_shp
-    for md in MeasurementDataset.objects.all():
-        d = read_data(md.files, str(md.measurementvariable_set.first()))
-        shp = cis_object_to_shp(d)
-        dt = d.coord('time')
-        dt.convert_standard_time_to_datetime()
-        t_start = dt.points.min()
-        t_end = dt.points.max()
-        md.measurementfile_set.add(wkt=shp.wkt)
+    from os.path import basename
+
+    for md in MeasurementType.objects.all():
+        for f in glob(md.files):
+            # Skip broken or already processed files
+            if basename(f) in broken_files or f in MeasurementFile.objects.values('filename'):
+                # Don't process this one
+                print("Skipping: {}".format(f))
+                continue
+            print("Processing: {}".format(f))
+            d = read_data(f, str(md.measurementvariable_set.first()))
+            try:
+                geom = GEOSGeometry(cis_object_to_shp(d, platform_type=md.dataset.get_platform_type_display()).wkt)
+            except ValueError:
+                print("Unable to determine spatial extent of file.")
+                geom = None
+            dt = d.coord('time')
+            dt.convert_standard_time_to_datetime()
+            t_start = dt.points.min()
+            t_end = dt.points.max()
+            # Add UTC timezone stamp
+            t_start = timezone.make_aware(t_start, timezone.UTC())
+            t_end = timezone.make_aware(t_end, timezone.UTC())
+            md.measurementfile_set.create(spatial_extent=geom, time_start=t_start, time_end=t_end, filename=f)
