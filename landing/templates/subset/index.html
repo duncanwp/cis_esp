@@ -1,15 +1,57 @@
 {% extends "landing/header.html" %}
+{% load staticfiles%}
 
 {% block head %}
     {#    Bring in the media necassary for the form #}
     {{ form.media }}
     {#  Bring in leaflet  #}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
+    <link rel="stylesheet" href="{% static 'leaflet/leaflet.draw/leaflet.draw.css' %}" />
 {% endblock %}
 
 {% block content %}
 
+{# The order of these imports really matters - see http://leaflet.github.io/Leaflet.draw/docs/examples/full.html for an example #}
+
     <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+    <script src="{% static 'leaflet/leaflet.draw/Leaflet.draw.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/Leaflet.Draw.Event.js' %}"></script>
+
+    <script src="{% static 'leaflet/leaflet.draw/Toolbar.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/Tooltip.js' %}"></script>
+
+    <script src="{% static 'leaflet/leaflet.draw/ext/GeometryUtil.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/ext/LatLngUtil.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/ext/LineUtil.Intersect.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/ext/Polygon.Intersect.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/ext/Polyline.Intersect.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/ext/TouchEvents.js' %}"></script>
+
+    <script src="{% static 'leaflet/leaflet.draw/draw/DrawToolbar.js' %}"></script>
+
+    <script src="{% static 'leaflet/leaflet.draw/draw/handler/Draw.Feature.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/draw/handler/Draw.SimpleShape.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/draw/handler/Draw.Polyline.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/draw/handler/Draw.Circle.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/draw/handler/Draw.Marker.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/draw/handler/Draw.Polygon.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/draw/handler/Draw.Rectangle.js' %}"></script>
+
+    <script src="{% static 'leaflet/leaflet.draw/edit/EditToolbar.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/edit/handler/EditToolbar.Edit.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/edit/handler/EditToolbar.Delete.js' %}"></script>
+
+    <script src="{% static 'leaflet/leaflet.draw/Control.Draw.js' %}"></script>
+
+    <script src="{% static 'leaflet/leaflet.draw/edit/handler/Edit.Poly.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/edit/handler/Edit.SimpleShape.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/edit/handler/Edit.Circle.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/edit/handler/Edit.Rectangle.js' %}"></script>
+    <script src="{% static 'leaflet/leaflet.draw/edit/handler/Edit.Marker.js' %}"></script>
+
+
+{#    <script src="{% static 'leaflet/leaflet.draw/edit/EditToolbar.js' %}"></script>#}
+{#    <script src="{% static 'leaflet/leaflet.draw/draw/handler/Draw.Rectangle.js' %}"></script>#}
 
     <h4>Select the data to subset</h4>
 
@@ -26,7 +68,67 @@
                     id: 'mapbox.satellite',
                     accessToken: 'pk.eyJ1IjoiZHVuY2Fud3AiLCJhIjoiY2l3d2F2eHRkMDBsZjJ6cHJheWxhbDNtMyJ9.PzUwtNYFXI0CnqG6GHFMhw'
                 }).addTo(mymap);
-        L.geoJSON({{ geojsonFeature|safe }}).addTo(mymap);
+        var bounds = [[54.559322, -5.767822], [56.1210604, -3.021240]];
+
+        // create an orange rectangle
+{#        L.rectangle(bounds, {color: "#ff7800", weight: 1}).addTo(mymap);#}
+
+        var originalDataStyle = {
+            'color': "#ff7800",
+            'weight': 1
+        };
+
+        L.geoJSON({{ geojsonFeature|safe }}, {style: originalDataStyle}).addTo(mymap);
+
+        var editableLayers = new L.FeatureGroup();
+        mymap.addLayer(editableLayers);
+
+        var options = {
+            draw: {
+                polyline: {
+                    shapeOptions: {
+                        color: '#f357a1',
+                        weight: 10
+                    }
+                },
+                polygon: {
+                    allowIntersection: false, // Restricts shapes to simple polygons
+                    drawError: {
+                        color: '#e1e100', // Color the shape will turn when intersects
+                        message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                    },
+                    shapeOptions: {
+                        color: '#bada55'
+                    }
+                },
+                circle: false, // Turns off this drawing tool
+                rectangle: {
+                    shapeOptions: {
+                        clickable: false
+                    }
+                },
+            },
+            edit: {
+                featureGroup: editableLayers, //REQUIRED!!
+                remove: false
+            }
+        };
+
+        var drawControl = new L.Control.Draw(options);
+
+        mymap.addControl(drawControl);
+
+        mymap.on(L.Draw.Event.CREATED, function (e) {
+            var type = e.layerType,
+                layer = e.layer;
+
+            if (type === 'marker') {
+                layer.bindPopup('A popup!');
+            }
+
+            editableLayers.addLayer(layer);
+        });
+
     </script>
 
 {% endblock %}
