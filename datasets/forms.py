@@ -1,16 +1,20 @@
 from django.contrib.gis import forms
 import datasets.models as model
-
+from datetime import datetime
 
 class DataSelection(forms.Form):
-    # Select the dataset
-    dataset = forms.ModelChoiceField(queryset=model.Dataset.objects.all())
+    # Select the measurement
+    measurement = forms.ChoiceField(choices=[("", "---------")] + list(model.Measurement.MEASUREMENT_TYPE_CHOICES))
 
     # All of these need to be updated based on the above...
-    variables = forms.ModelMultipleChoiceField(queryset=model.MeasurementVariable.objects.all())
 
-    start_date = forms.DateField(widget=forms.SelectDateWidget(years=[d.year for d in model.MeasurementFile.objects.all().datetimes('time_start', 'year')]))
-    end_date = forms.DateField(widget=forms.SelectDateWidget())
+    datasets = forms.ModelMultipleChoiceField(queryset=model.Dataset.objects.all())
 
-    # I'd like to restrict this to a rectangle somehow... and probably have the option for text entry
-    # region = forms.PolygonField(widget=forms.OSMWidget(attrs={'map_width': 800, 'map_height': 500}))
+    all_years = [d.year for d in model.MeasurementFile.objects.all().datetimes('time_start', 'year')]
+    if all_years:
+        valid_years = range(min(all_years), max(all_years))
+    else:
+        valid_years = range(1990, 2010)
+
+    start_date = forms.DateField(widget=forms.SelectDateWidget(years=valid_years))
+    end_date = forms.DateField(widget=forms.SelectDateWidget(years=valid_years), initial=datetime(valid_years[-1], 1, 1))

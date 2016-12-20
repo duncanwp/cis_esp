@@ -102,7 +102,8 @@ pre {
   overflow: auto;
 }
 /*Set a default map height*/
-#mapid { height: 480px; }
+#mapid { height: 480px; max-width: 800px}
+
 code,
 kbd,
 pre,

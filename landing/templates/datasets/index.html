@@ -15,82 +15,59 @@
 
 {# The order of these imports really matters - see http://leaflet.github.io/Leaflet.draw/docs/examples/full.html for an example #}
 
-    <h4>Select the data to subset</h4>
+    <h4>Browse data</h4>
 
-    {% include 'common/includes/generic_form.html' %}
+    {% load i18n widget_tweaks %}
 
-     <div id="mapid"></div>
+    <form class="form-horizontal" role="form" action="." method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            {% if field.errors %}
+                <div class="form-group has-error">
+                    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
+                    <div class="col-sm-10">
+                        {{ field|attr:"class:form-control" }}
+                        <span class="help-block">
+                            {% for error in  field.errors %}{{ error }}{% endfor %}
+                        </span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
+                    <div class="col-sm-10">
+                        {{ field|attr:"class:form-control" }}
+                        {% if field.help_text %}
+                            <p class="help-block"><small>{{ field.help_text }}</small></p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10" id="mapid"></div>
+        </div>
 
-    <script type="text/javascript">
-        var mymap = L.map('mapid').setView([20, 0], 1.5);
+        <script type="text/javascript">
+            var mymap = L.map('mapid').setView([20, 0], 1.5);
 
-        L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-                    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-                    maxZoom: 5,
-                    id: 'mapbox.satellite',
-                    accessToken: 'pk.eyJ1IjoiZHVuY2Fud3AiLCJhIjoiY2l3d2F2eHRkMDBsZjJ6cHJheWxhbDNtMyJ9.PzUwtNYFXI0CnqG6GHFMhw'
-                }).addTo(mymap);
-        var bounds = [[54.559322, -5.767822], [56.1210604, -3.021240]];
+            L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+                        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                        maxZoom: 5,
+                        noWrap: true,
+                        id: 'mapbox.satellite',
+                        accessToken: 'pk.eyJ1IjoiZHVuY2Fud3AiLCJhIjoiY2l3d2F2eHRkMDBsZjJ6cHJheWxhbDNtMyJ9.PzUwtNYFXI0CnqG6GHFMhw'
+                    }).addTo(mymap);
 
-        // create an orange rectangle
-{#        L.rectangle(bounds, {color: "#ff7800", weight: 1}).addTo(mymap);#}
+            var originalDataStyle = {
+                'color': "#ff7800",
+                'weight': 1
+            };
 
-        var originalDataStyle = {
-            'color': "#ff7800",
-            'weight': 1
-        };
+            L.geoJSON({{ geojsonFeature|safe }}, {style: originalDataStyle}).addTo(mymap);
 
-        L.geoJSON({{ geojsonFeature|safe }}, {style: originalDataStyle}).addTo(mymap);
+        </script>
 
-        var editableLayers = new L.FeatureGroup();
-        mymap.addLayer(editableLayers);
-
-        var options = {
-            draw: {
-                polyline: {
-                    shapeOptions: {
-                        color: '#f357a1',
-                        weight: 10
-                    }
-                },
-                polygon: {
-                    allowIntersection: false, // Restricts shapes to simple polygons
-                    drawError: {
-                        color: '#e1e100', // Color the shape will turn when intersects
-                        message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
-                    },
-                    shapeOptions: {
-                        color: '#bada55'
-                    }
-                },
-                circle: false, // Turns off this drawing tool
-                rectangle: {
-                    shapeOptions: {
-                        clickable: false
-                    }
-                },
-            },
-            edit: {
-                featureGroup: editableLayers, //REQUIRED!!
-                remove: false
-            }
-        };
-
-        var drawControl = new L.Control.Draw(options);
-
-        mymap.addControl(drawControl);
-
-        mymap.on(L.Draw.Event.CREATED, function (e) {
-            var type = e.layerType,
-                layer = e.layer;
-
-            if (type === 'marker') {
-                layer.bindPopup('A popup!');
-            }
-
-            editableLayers.addLayer(layer);
-        });
-
-    </script>
+    </form>
 
 {% endblock %}
