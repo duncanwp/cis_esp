@@ -56,7 +56,10 @@ class Dataset(models.Model):
     public = models.BooleanField(default=False)
 
     def __str__(self):
-        return "{}".format(self.name)
+        if self.name is None:
+            return "{} ({})".format(self.campaign.name, self.get_platform_type_display())
+        else:
+            return "{}".format(self.name)
 
 
 class MeasurementType(models.Model):
