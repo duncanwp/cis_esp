@@ -29,9 +29,18 @@ def new_Campaign(name, region=None, platform=None, **kwargs):
     return campaign
 
 
+def create_variable_if_needed(variable_name, **kwargs):
+    # TODO
+    try:
+        v = MeasurementVariable.objects.get(variable_name=variable_name, **kwargs)
+    except MeasurementVariable.DoesNotExist:
+        v = MeasurementVariable
+
+
 def CNMeasurementDataset(files, variables):
     mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CN)
     v = [MeasurementVariable.objects.create(variable_name=var, measurement_type=mt) for var in variables.split(",")]
+    mt.measurementvariable_set.add(*v, bulk=False)
     return mt
 
 
@@ -497,8 +506,8 @@ campaigns = [ace1,
 # All NSD files and variables
 nsd_campaigns = [
     NSDMeasurementDataset(campaign_platform=accacia.dataset_set.all()[0], files=join(data_path, "ACCACIA", "DMPS*Ship*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=ace1_air, files=join(data_path, "ACE1", "*_NSD_*.nc"), variables="NUMDIST_DMA_OPC"),
-    NSDMeasurementDataset(campaign_platform=aceasia_air, files=join(data_path, "ACEASIA", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=ace1_air, files=join(data_path, "ACE1", "ACE1_NSD_*.nc"), variables="NUMDIST_DMA_OPC"),
+    NSDMeasurementDataset(campaign_platform=aceasia_air, files=join(data_path, "ACEASIA", "ACEASIA_NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=aegean_game.dataset_set.all()[0], files=join(data_path, "AEGEAN-GAME", "SMPS_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=amaze.dataset_set.all()[0], files=join(data_path, "AMAZE-08", "NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=amf_cape_cod, files=join(data_path, "AMF_stations", "CapeCod", "SMPS.*.nc"),
@@ -519,19 +528,19 @@ nsd_campaigns = [
     NSDMeasurementDataset(campaign_platform=cops.dataset_set.all()[0], files=join(data_path, "COPS", "DMPS_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=environment_canada.dataset_set.all()[0], files=join(data_path, "Environment_Canada", "*SMPS*.nc"),
                         variables="SIZE_DISTRIBUTION"),
-    NSDMeasurementDataset(campaign_platform=indoex.dataset_set.all()[0], files=join(data_path, "INDOEX", "*_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=intexa.dataset_set.all()[0], files=join(data_path, "INTEX-A", "*_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=mirage.dataset_set.all()[0], files=join(data_path, "MIRAGE", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=indoex.dataset_set.all()[0], files=join(data_path, "INDOEX", "INDOEX_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=intexa.dataset_set.all()[0], files=join(data_path, "INTEX-A", "INTEX-A_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=mirage.dataset_set.all()[0], files=join(data_path, "MIRAGE", "MIRAGE_NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=op3.dataset_set.all()[0], files=join(data_path, "OP3", "DMPS*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=pase.dataset_set.all()[0], files=join(data_path, "PASE", "*_NSD_*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=pem_tropics_a_p3b, files=join(data_path, "PEMTropicsA", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=pase.dataset_set.all()[0], files=join(data_path, "PASE", "PASE_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=pem_tropics_a_p3b, files=join(data_path, "PEMTropicsA", "PEMTropicsA_NSD_*.nc"), variables="NSD"),
     # TODO: These files haven't been turned into a nice NSD yet, I suppose I could if I had the time or inclination...
     # NSDMeasurementDataset(campaign_platform=pem_tropics_b_dc8, files=join(data_path, "PEMTropicsB", "NSD_*.nc"), variables=???),
     # NSDMeasurementDataset(campaign_platform=pem_west_b.dataset_set.all()[0], files=join(data_path, "PEMWestB", "AerComp_*.nc"), variables=???)
-    NSDMeasurementDataset(campaign_platform=pem_tropics_b_p3b, files=join(data_path, "PEMTropicsB", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=pem_tropics_b_p3b, files=join(data_path, "PEMTropicsB", "PEMTropicsB_NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=pride.dataset_set.all()[0], files=join(data_path, "PRIDE_PRD", "NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=rhamble.dataset_set.all()[0], files=join(data_path, "RHaMBLe", "DMPS*.nc"), variables="NSD"),
-    NSDMeasurementDataset(campaign_platform=vocals_c130, files=join(data_path, "VOCALS", "*_NSD_*.nc"), variables="NSD"),
+    NSDMeasurementDataset(campaign_platform=vocals_c130, files=join(data_path, "VOCALS", "VOCALS_NSD_*.nc"), variables="NSD"),
     NSDMeasurementDataset(campaign_platform=vocals_faam, files=join(data_path, "VOCALS", "SMPS_VOCALS_*.nc"), variables="NSD")]
 
 # PEMWestB - needs turning into a nice NSD
@@ -621,7 +630,7 @@ def load_gassp_data():
     for md in MeasurementType.objects.all():
         for f in glob(md.files):
             # Skip broken or already processed files
-            if basename(f) in broken_files or f in MeasurementFile.objects.values('filename'):
+            if basename(f) in broken_files or len(MeasurementFile.objects.filter(filename=f).all()) > 0:
                 # Don't process this one
                 print("Skipping: {}".format(f))
                 continue
