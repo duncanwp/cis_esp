@@ -62,7 +62,7 @@ class Dataset(models.Model):
             return "{}".format(self.name)
 
 
-class MeasurementType(models.Model):
+class Measurement(models.Model):
     """
     A MeasurementDataset is a specific type of measurement (CCN, AOD, N10, etc...), which may have more than variable,
     and be stored in more than one file.
@@ -115,7 +115,7 @@ class MeasurementVariable(models.Model):
     """
     variable_name = models.CharField(max_length=50)
 
-    measurement_type = models.ForeignKey(MeasurementType, on_delete=models.CASCADE)
+    measurement_type = models.ForeignKey(Measurement, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{}".format(self.variable_name)
@@ -149,7 +149,7 @@ class MeasurementFile(models.Model):
     """
     A MeasurementFile is a reference to an actual file containing the MeasurementDataset that CIS can read.
     """
-    measurements = models.ManyToManyField(MeasurementType)
+    measurements = models.ManyToManyField(Measurement)
 
     #TODO: Note that there are specific fields for filenames - I might want to use one of those
     filename = models.CharField(max_length=250)

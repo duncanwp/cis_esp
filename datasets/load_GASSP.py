@@ -1,4 +1,4 @@
-from .models import Dataset, MeasurementFile, MeasurementType, MeasurementVariable, \
+from .models import Dataset, MeasurementFile, Measurement, MeasurementVariable, \
     CCNMeasurementVariable, Campaign
 import itertools
 from os.path import join
@@ -15,7 +15,7 @@ def new_platform(region, platform, campaign=None, name=None, **kwargs):
     # Flatten the various measurement campaigns
     measurements = [m for k, ml in kwargs.items() for m in ml if ml is not None]
     cp, _ = Dataset.objects.get_or_create(region=region, platform_type=platform, name=name, campaign=campaign)
-    cp.measurementtype_set.add(*measurements)
+    cp.measurement_set.add(*measurements)
     # cp.measurement_campaigns = measurements
     return cp
 
@@ -29,48 +29,45 @@ def new_Campaign(name, region=None, platform=None, **kwargs):
 
 
 def add_variables_and_create_if_needed(measurement_type, inst_vars):
-    db_vars = []
     for v in inst_vars:
-        # TODO
         if v in MeasurementVariable.objects.all():
             measurement_type.measurementvariable_set.add(v)
         else:
             measurement_type.measurementvariable_set.add(v, bulk=False)
-    return db_vars
 
 
 def CNMeasurementDataset(files, variables):
-    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CN)
+    mt, _ = Measurement.objects.get_or_create(files=files, measurement_type=Measurement.CN)
     v = [MeasurementVariable(variable_name=var, measurement_type=mt) for var in variables.split(",")]
     add_variables_and_create_if_needed(mt, v)
     return mt
 
 
 def SO4MeasurementDataset(files, variables):
-    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.SO4)
+    mt, _ = Measurement.objects.get_or_create(files=files, measurement_type=Measurement.SO4)
     v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
     add_variables_and_create_if_needed(mt, v)
     return mt
 
 
 def BCMeasurementDataset(files, variables, campaign_platform):
-    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.BC,
-                                                  dataset=campaign_platform)
+    mt, _ = Measurement.objects.get_or_create(files=files, measurement_type=Measurement.BC,
+                                              dataset=campaign_platform)
     v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
     add_variables_and_create_if_needed(mt, v)
     return mt
 
 
 def NSDMeasurementDataset(files, variables, campaign_platform):
-    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.NSD,
-                                                  dataset=campaign_platform)
+    mt, _ = Measurement.objects.get_or_create(files=files, measurement_type=Measurement.NSD,
+                                              dataset=campaign_platform)
     v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
     add_variables_and_create_if_needed(mt, v)
     return mt
 
 
 def CCNMeasurementDataset(files, variables, fixed_ss=None, ss_variable=None):
-    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CCN)
+    mt, _ = Measurement.objects.get_or_create(files=files, measurement_type=Measurement.CCN)
     if ss_variable is not None:
         v = [CCNMeasurementVariable(variable_name=var, fixed_ss=fixed_ss, ss_variable=ss_var) for var, ss_var in
              zip(variables.split(","), ss_variable.split(","))]
@@ -81,7 +78,7 @@ def CCNMeasurementDataset(files, variables, fixed_ss=None, ss_variable=None):
 
 
 def CCN_with_multiple_variables(files, variables):
-    mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CCN)
+    mt, _ = Measurement.objects.get_or_create(files=files, measurement_type=Measurement.CCN)
     add_variables_and_create_if_needed(mt, variables)
     return mt
 
@@ -634,7 +631,7 @@ def load_gassp_data(test_set=False):
     dr = DataReader()
     limit = 2 if test_set else None
 
-    for md in MeasurementType.objects.all():
+    for md in Measurement.objects.all():
         for f in islice(glob(md.files), 0, limit):
             # Skip broken or already processed files
             if basename(f) in broken_files or len(MeasurementFile.objects.filter(filename=f).all()) > 0:

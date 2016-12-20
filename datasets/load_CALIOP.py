@@ -1,4 +1,4 @@
-from datasets.models import Dataset, MeasurementFile, MeasurementType, Campaign
+from datasets.models import Dataset, MeasurementFile, Measurement, Campaign
 from datetime import datetime
 
 
@@ -20,8 +20,8 @@ def load_caliop_data(dirpath, test_set=False):
                                spatial_extent=GLOBAL_EXTENT.wkt, owner=User.objects.filter(username='duncan').first(),
                                campaign=c)
 
-    pbc = MeasurementType(measurement_type='PBC', dataset=d)
-    tbc = MeasurementType(measurement_type='TBC', dataset=d)
+    pbc = Measurement(measurement_type='PBC', dataset=d)
+    tbc = Measurement(measurement_type='TBC', dataset=d)
     pbc.save()
     tbc.save()
 
