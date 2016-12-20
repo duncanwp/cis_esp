@@ -16,9 +16,13 @@ def index(request, template_name='datasets/index.html'):
 
         geoms = MeasurementFile.objects.filter(time_end__gte=form.cleaned_data['start_date'],
                                                time_start__lte=form.cleaned_data['end_date'],
-                                               measurements__measurement_type=form.cleaned_data['measurement'],
-                                               measurements__dataset__in=form.cleaned_data['datasets']).all()
+                                               measurements__measurement_type=form.cleaned_data['measurement']).all()
 
+        # Include all datasets if none are chosen
+        if form.cleaned_data['datasets']:
+            geoms = geoms.filter(measurements__dataset__in=form.cleaned_data['datasets'])
+
+        # Don't set a max limit - I might have to revisit this depending on performance
         # if len(geoms) > 10:
         #     print('Warning')
         #     geoms = geoms[:10]
