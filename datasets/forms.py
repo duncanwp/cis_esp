@@ -8,7 +8,7 @@ class DataSelection(forms.Form):
 
     # All of these need to be updated based on the above...
 
-    datasets = forms.ModelMultipleChoiceField(queryset=model.Dataset.objects.all())
+    datasets = forms.ModelMultipleChoiceField(queryset=model.Dataset.objects.all(), required=False)
 
     all_years = [d.year for d in model.MeasurementFile.objects.all().datetimes('time_start', 'year')]
     if all_years:
