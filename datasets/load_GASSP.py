@@ -1,6 +1,5 @@
 from .models import Dataset, MeasurementFile, MeasurementType, MeasurementVariable, \
     CCNMeasurementVariable, Campaign
-from datetime import datetime
 import itertools
 from os.path import join
 from os.path import expanduser
@@ -29,25 +28,28 @@ def new_Campaign(name, region=None, platform=None, **kwargs):
     return campaign
 
 
-def create_variable_if_needed(variable_name, **kwargs):
-    # TODO
-    try:
-        v = MeasurementVariable.objects.get(variable_name=variable_name, **kwargs)
-    except MeasurementVariable.DoesNotExist:
-        v = MeasurementVariable
+def add_variables_and_create_if_needed(measurement_type, inst_vars):
+    db_vars = []
+    for v in inst_vars:
+        # TODO
+        if v in MeasurementVariable.objects.all():
+            measurement_type.measurementvariable_set.add(v)
+        else:
+            measurement_type.measurementvariable_set.add(v, bulk=False)
+    return db_vars
 
 
 def CNMeasurementDataset(files, variables):
     mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CN)
-    v = [MeasurementVariable.objects.create(variable_name=var, measurement_type=mt) for var in variables.split(",")]
-    mt.measurementvariable_set.add(*v, bulk=False)
+    v = [MeasurementVariable(variable_name=var, measurement_type=mt) for var in variables.split(",")]
+    add_variables_and_create_if_needed(mt, v)
     return mt
 
 
 def SO4MeasurementDataset(files, variables):
     mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.SO4)
     v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
-    mt.measurementvariable_set.add(*v, bulk=False)
+    add_variables_and_create_if_needed(mt, v)
     return mt
 
 
@@ -55,7 +57,7 @@ def BCMeasurementDataset(files, variables, campaign_platform):
     mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.BC,
                                                   dataset=campaign_platform)
     v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
-    mt.measurementvariable_set.add(*v, bulk=False)
+    add_variables_and_create_if_needed(mt, v)
     return mt
 
 
@@ -63,7 +65,7 @@ def NSDMeasurementDataset(files, variables, campaign_platform):
     mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.NSD,
                                                   dataset=campaign_platform)
     v = [MeasurementVariable(variable_name=var) for var in variables.split(",")]
-    mt.measurementvariable_set.add(*v, bulk=False)
+    add_variables_and_create_if_needed(mt, v)
     return mt
 
 
@@ -74,13 +76,13 @@ def CCNMeasurementDataset(files, variables, fixed_ss=None, ss_variable=None):
              zip(variables.split(","), ss_variable.split(","))]
     else:
         v = [CCNMeasurementVariable(variable_name=var, fixed_ss=fixed_ss) for var in variables.split(",")]
-    mt.measurementvariable_set.add(*v, bulk=False)
+    add_variables_and_create_if_needed(mt, v)
     return mt
 
 
 def CCN_with_multiple_variables(files, variables):
     mt, _ = MeasurementType.objects.get_or_create(files=files, measurement_type=MeasurementType.CCN)
-    mt.measurementvariable_set.add(*variables, bulk=False)
+    add_variables_and_create_if_needed(mt, variables)
     return mt
 
 
@@ -619,28 +621,40 @@ broken_files = ['ARCTAS_AMS_RF02_20080327_r2ict_apr2012.nc',
 
 
 # Methods for actually reading the data
-def load_gassp_data():
-    from cis import read_data
+def load_gassp_data(test_set=False):
+    from cis.data_io.data_reader import DataReader
     from django.contrib.gis.geos import GEOSGeometry
     from glob import glob
     from django.utils import timezone
     from .utils import cis_object_to_shp
     from os.path import basename
+    from itertools import islice
+
+    # Create a datareader so that we can read coordinates rather than datasets
+    dr = DataReader()
+    limit = 2 if test_set else None
 
     for md in MeasurementType.objects.all():
-        for f in glob(md.files):
+        for f in islice(glob(md.files), 0, limit):
             # Skip broken or already processed files
             if basename(f) in broken_files or len(MeasurementFile.objects.filter(filename=f).all()) > 0:
                 # Don't process this one
                 print("Skipping: {}".format(f))
                 continue
             print("Processing: {}".format(f))
-            d = read_data(f, str(md.measurementvariable_set.first()))
+            d = dr.read_coordinates(f)
+            if d.count() == 0:
+                print("Empty file.")
+                continue
+
+            # Get the spatial extent
             try:
                 geom = GEOSGeometry(cis_object_to_shp(d, platform_type=md.dataset.get_platform_type_display()).wkt)
             except ValueError:
                 print("Unable to determine spatial extent of file.")
                 geom = None
+
+            # Sort the time extent
             dt = d.coord('time')
             dt.convert_standard_time_to_datetime()
             t_start = dt.points.min()
