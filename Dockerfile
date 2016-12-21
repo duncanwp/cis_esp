@@ -5,4 +5,4 @@ ADD . /cis-esp
 WORKDIR /cis-esp
 
 RUN conda install -c conda-forge --file conda-requirements.txt
-RUN pip install --file requirements.txt
+RUN pip install -r requirements.txt
