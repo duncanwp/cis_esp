@@ -3,6 +3,7 @@ from nose.tools import assert_almost_equal, assert_greater, assert_equal
 from datasets.utils import cis_object_to_shp
 from cis.test.integration_test_data import cis_test_files
 from cis import read_data
+import shapely.geometry as sgeom
 import numpy as np
 
 # Some example CALIOP tracks
@@ -143,7 +144,6 @@ if __name__ == '__main__':
     from datasets.utils import plot_shape
     from datasets.utils import lat_lon_points_to_linestring, GMT
     import numpy as np
-    import shapely.geometry as sgeom
 
     shp = cis_object_to_shp(read_data(valid_modis_l2_filename,
                                       'Optical_Depth_Land_And_Ocean'),
