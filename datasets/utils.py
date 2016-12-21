@@ -3,6 +3,7 @@ import shapely.geometry as sgeom
 GLOBAL_EXTENT = sgeom.box(-180, -90, 180, 90)
 
 IDL = sgeom.LineString(((180, -90), (180, 90)))
+GMT = sgeom.LineString(((0, -90), (0, 90)))
 
 platform_shapes = {'Ground station': sgeom.Point, 'Ship': sgeom.LineString, 'Aircraft': sgeom.LineString,
                    'Global Model': sgeom.Polygon, 'Regional Model': sgeom.Polygon, 'Satellite': sgeom.MultiPoint}
@@ -81,6 +82,9 @@ def idl_resolve(geom, buffer_width=0.0000001):
 def lat_lon_points_to_polygon(lons, lats, coordinate_system=None):
     """
     Routine for converting a list of lat lons to an outline polygon taking into account the dateline
+
+    .note this might not work with large polygons which cross GMT *and* the IDL
+
     :param numpy.ndarray lats: Array of latitude points (not necasarily 1-D)
     :param numpy.ndarray lons: Array of longitude points (not necasarily 1-D)
     :return shapely.geometry.Polygon: The convex hull of the points
@@ -104,7 +108,7 @@ def lat_lon_points_to_polygon(lons, lats, coordinate_system=None):
     return pc.project_geometry(poly, coordinate_system)
 
 
-def lat_lon_points_to_linestring(lons, lats, coordinate_system=None):
+def lat_lon_points_to_linestring(lons, lats):
     """
     Routine for converting a list of lat lons to a linestring taking into account the dateline
     :param numpy.ndarray lats: Array of latitude points (not necasarily 1-D)
@@ -113,17 +117,10 @@ def lat_lon_points_to_linestring(lons, lats, coordinate_system=None):
     """
     import cartopy.crs as ccrs
     poly = sgeom.LineString(list(zip(lons.flat, lats.flat)))
-    shifted_poly = shift(poly)
-    if shifted_poly.intersects(IDL):
-        poly = shifted_poly
-    else:
-        poly = poly
 
     pc = ccrs.PlateCarree()
-    coordinate_system = coordinate_system or pc
-
-    # Project our geometry onto a fixed -180 to 180 projection
-    return pc.project_geometry(poly, coordinate_system)
+    # Project our PC geometry onto a Geodetic -180 to 180 projection
+    return pc.project_geometry(poly, ccrs.Geodetic())
 
 
 def cis_object_to_shp(data, tolerance=0.1, platform_type=None):
@@ -134,7 +131,6 @@ def cis_object_to_shp(data, tolerance=0.1, platform_type=None):
 
     lon = data.coord('longitude')
     lat = data.coord('latitude')
-
 
     shape = platform_shapes[platform_type] if platform_type is not None else sgeom.Polygon
 
@@ -165,13 +161,13 @@ def cis_object_to_shp(data, tolerance=0.1, platform_type=None):
     return rough_poly
 
 
-def plot_shape(shp):
+def plot_shape(shps):
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
 
     ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=0))
     ax.coastlines()
     # ax.set_global()
-    ax.add_geometries([shp], ccrs.PlateCarree(), edgecolor='black', alpha=0.5)
+    ax.add_geometries(shps, ccrs.PlateCarree(), edgecolor='black', alpha=0.5)
 
     plt.show()
