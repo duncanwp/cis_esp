@@ -13,4 +13,4 @@ VOLUME ["/cis-esp/media/", "/cis-esp/logs/"]
 # Port to expose
 EXPOSE 80
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/cis-esp/docker-entrypoint.sh"]
