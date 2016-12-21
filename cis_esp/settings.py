@@ -11,6 +11,17 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 import os
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+env_file = os.environ.get('PROJECT_ENV_FILE', BASE_DIR + "/dev.env")
+try:
+    with open(env_file) as f:
+        proj_envs = dict(line.strip().split('=', maxsplit=1) for line in f)
+        os.environ.update(proj_envs)
+except IOError:
+    print("No env file found")
+
 
 def env_var(key, default=None):
     """Retrieves env vars and makes Python boolean replacements"""
@@ -20,9 +31,6 @@ def env_var(key, default=None):
     elif val == 'False':
         val = False
     return val
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
