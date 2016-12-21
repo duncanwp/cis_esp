@@ -6,3 +6,11 @@ WORKDIR /cis-esp
 
 RUN conda install -c conda-forge --file conda-requirements.txt
 RUN pip install -r requirements.txt
+
+RUN mkdir media static logs
+VOLUME ["/cis-esp/media/", "/cis-esp/logs/"]
+
+# Port to expose
+EXPOSE 80
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
