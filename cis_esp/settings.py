@@ -9,8 +9,17 @@ https://docs.djangoproject.com/en/1.10/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
-
 import os
+
+
+def env_var(key, default=None):
+    """Retrieves env vars and makes Python boolean replacements"""
+    val = os.environ.get(key, default)
+    if val == 'True':
+        val = True
+    elif val == 'False':
+        val = False
+    return val
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,13 +29,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'kjm99a@q)ban)u=kys$8t)-rcu7i0sr!^!680mja(z+c8*pzil'
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_var('DEBUG', False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
+LEAFLET_TOKEN = os.environ['LEAFLET_TOKEN']
 
 # Application definition
 
@@ -69,6 +79,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'cis_esp.context_processors.admin_media'
             ],
         },
     },
@@ -83,9 +94,10 @@ WSGI_APPLICATION = 'cis_esp.wsgi.application'
 DATABASES = {
     'default': {
          'ENGINE': 'django.contrib.gis.db.backends.postgis',
-         'NAME': 'postgres',
-         'USER': 'postgres',
-         'PASSWORD': 'postgres'
+         'NAME': os.environ['DATABASE_NAME'],
+         'HOST': os.environ['DATABASE_HOST'],
+         'USER': os.environ['DATABASE_USER'],
+         'PASSWORD': os.environ['DATABASE_PASSWORD']
     },
 }
 
