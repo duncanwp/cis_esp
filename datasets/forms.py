@@ -2,6 +2,7 @@ from django.contrib.gis import forms
 import datasets.models as model
 from datetime import datetime
 
+
 class DataSelection(forms.Form):
     # Select the measurement
     measurement = forms.ChoiceField(choices=[("", "---------")] + list(model.Measurement.MEASUREMENT_TYPE_CHOICES))
@@ -18,3 +19,18 @@ class DataSelection(forms.Form):
 
     start_date = forms.DateField(widget=forms.SelectDateWidget(years=valid_years))
     end_date = forms.DateField(widget=forms.SelectDateWidget(years=valid_years), initial=datetime(valid_years[-1], 1, 1))
+
+    def __init__(self, *args, **kwargs):
+        forms.Form.__init__(self, *args, **kwargs)
+        parents = model.Measurement.objects.all()
+        if len(parents)==1:
+            self.fields['measurement'].initial=parents[0].pk
+
+        parent_id=self.fields['measurement'].initial or self.initial.get('measurement')
+
+        if parent_id:
+            # parent is known. Now I can display the matching children.
+            children=model.Dataset.objects.filter(parent__id=parent_id)
+            self.fields['datasets'].queryset=children
+            if len(children)==1:
+                self.fields['datasets'].initial=children[0].pk

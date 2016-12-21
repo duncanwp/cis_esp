@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from django.core.serializers import serialize
-from datasets.models import Dataset, Campaign, MeasurementVariable, MeasurementFile
+from datasets.models import Dataset, Campaign, Measurement, MeasurementFile
 from .forms import DataSelection
 
 
@@ -32,3 +32,16 @@ def index(request, template_name='datasets/index.html'):
         feature = None
 
     return render(request, template_name, {'form': form, 'geojsonFeature': feature})
+
+
+def parent_to_children(request):
+    import json
+
+    parent=request.GET.get('measurement')
+    ret=[]
+    if parent:
+        for child in Dataset.objects.filter(measurement__measurement_type=parent):
+            ret.append(dict(id=child.id, value=child))
+    if len(ret)!=1:
+        ret.insert(0, dict(id='', value='---'))
+    return HttpResponse(json.dumps(ret), content_type='application/json')

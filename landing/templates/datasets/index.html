@@ -7,6 +7,7 @@
     {#  Bring in leaflet  #}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
     <link rel="stylesheet" href="{% static 'leaflet/leaflet.draw/leaflet.draw.css' %}" />
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -45,12 +46,16 @@
             {% endif %}
         {% endfor %}
         <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10" id="mapid"></div>
-
-{#            TODO: This is just here while I sort the AJAX #}
-            <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
-
+            {#            TODO: This is just here while I sort the AJAX #}
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary">{% trans "Update" %}</button>
+            </div>
         </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10" id="mapid"></div>
+        </div>
+
 
         <script type="text/javascript">
             var mymap = L.map('mapid').setView([20, 0], 1.5);
@@ -72,6 +77,31 @@
 
         </script>
 
+    <script type="text/javascript">
+        function json_to_select(url, select_selector) {
+        /*
+         Fill a select input field with data from a getJSON call
+         Inspired by: http://stackoverflow.com/questions/1388302/create-option-on-the-fly-with-jquery
+        */
+            $.getJSON(url, function(data) {
+            var opt=$(select_selector);
+            var old_val=opt.val();
+                opt.html('');
+                $.each(data, function () {
+                    opt.append($('<option/>').val(this.id).text(this.value));
+                });
+                opt.val(old_val);
+                opt.change();
+            })
+        }
+
+
+           $(function(){
+             $('#id_measurement').change(function(){
+               json_to_select('datasets/parent-to-children/?measurement=' + $(this).val(), '#id_datasets');
+             })
+            });
+    </script>
     </form>
 
 {% endblock %}
