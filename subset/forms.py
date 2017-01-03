@@ -9,7 +9,9 @@ class DataSelection(forms.Form):
     # All of these need to be updated based on the above...
     variables = forms.ModelMultipleChoiceField(queryset=model.MeasurementVariable.objects.all())
 
-    start_date = forms.DateField(widget=forms.SelectDateWidget(years=[d.year for d in model.MeasurementFile.objects.all().datetimes('time_start', 'year')]))
+    # TODO For some reason django can't resolve this relationship...
+    # start_date = forms.DateField(widget=forms.SelectDateWidget(years=[d.year for d in model.MeasurementFile.objects.all().datetimes('time_start', 'year')]))
+    start_date = forms.DateField(widget=forms.SelectDateWidget())
     end_date = forms.DateField(widget=forms.SelectDateWidget())
 
     # I'd like to restrict this to a rectangle somehow... and probably have the option for text entry
