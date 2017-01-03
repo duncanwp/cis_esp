@@ -2,8 +2,16 @@ from django.shortcuts import render, redirect, HttpResponse
 from django.core.serializers import serialize
 from .models import Dataset, Campaign, Measurement, MeasurementFile
 from .forms import DataSelection
-from .serializers import DatasetSerializer
+from .serializers import DatasetSerializer, MeasurementSerializer, MeasurementFileSerializer, CampaignSerializer
 from rest_framework import viewsets
+
+
+class CampaignViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    This viewset automatically provides `list` and `detail` actions.
+    """
+    queryset = Campaign.objects.all()
+    serializer_class = CampaignSerializer
 
 
 class DatasetViewSet(viewsets.ReadOnlyModelViewSet):
@@ -12,6 +20,22 @@ class DatasetViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
+
+
+class MeasurementViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    This viewset automatically provides `list` and `detail` actions.
+    """
+    queryset = Measurement.objects.all()
+    serializer_class = MeasurementSerializer
+
+
+class MeasurementFileViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    This viewset automatically provides `list` and `detail` actions.
+    """
+    queryset = MeasurementFile.objects.all()
+    serializer_class = MeasurementFileSerializer
 
 
 def index(request, template_name='datasets/index.html'):

@@ -152,3 +152,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 GDAL_LIBRARY_PATH = r'C:\Users\duncan\Anaconda3\envs\cis_esp\Library\bin\gdal201.dll'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50
+}
