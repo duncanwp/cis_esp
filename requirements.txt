@@ -1,4 +1,5 @@
 django-widget-tweaks
 django-extensions
+django-filter
 gunicorn
 djangorestframework-gis
