@@ -62,7 +62,6 @@ INSTALLED_APPS = [
     'landing',
     'datasets',
     'subset',
-    'world',
     'widget_tweaks'
 ]
 
