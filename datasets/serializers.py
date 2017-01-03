@@ -1,3 +1,6 @@
+"""
+Searilizers of all the model types for API usage
+"""
 from rest_framework import serializers
 from .models import Campaign, Dataset, Measurement, MeasurementFile
 from rest_framework_gis.serializers import GeoFeatureModelSerializer

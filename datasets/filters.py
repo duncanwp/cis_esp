@@ -1,12 +1,13 @@
-# from django_filters.rest_framework import FilterSet, ModelChoiceFilter
-# from rest_framework import filters
 from .models import Dataset
 import django_filters
 from rest_framework_gis.filters import GeoFilterSet
 
 
 class DatasetFilter(GeoFilterSet):
-    measurement_type = django_filters.ModelChoiceFilter(name='measurement__measurement_type')
+    """
+    A filter for dataset API queries to allow querying the measurement type
+    """
+    measurement_type = django_filters.CharFilter(name='measurement__measurement_type')
 
     class Meta:
         model = Dataset
