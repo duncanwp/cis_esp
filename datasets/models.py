@@ -48,7 +48,7 @@ class Dataset(models.Model):
     # Misc attributes
     project_URL = models.CharField(max_length=50, blank=True, null=True)
     principal_investigator = models.CharField(max_length=50, blank=True, null=True)
-    source = models.CharField(max_length=5050, blank=True, null=True)
+    source = models.CharField(max_length=50, blank=True, null=True)
 
     # Deleting a user also deletes their datasets
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True)

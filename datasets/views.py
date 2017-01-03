@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.core.serializers import serialize
+from rest_framework import viewsets, filters
 from .models import Dataset, Campaign, Measurement, MeasurementFile
 from .forms import DataSelection
 from .serializers import DatasetSerializer, MeasurementSerializer, MeasurementFileSerializer, CampaignSerializer
-from rest_framework import viewsets
+from .filters import DatasetFilter
 
 
 class CampaignViewSet(viewsets.ReadOnlyModelViewSet):
@@ -18,6 +19,9 @@ class DatasetViewSet(viewsets.ReadOnlyModelViewSet):
     """
     This viewset automatically provides `list` and `detail` actions.
     """
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_class = DatasetFilter
+
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
 
