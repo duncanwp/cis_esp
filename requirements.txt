@@ -1,3 +1,4 @@
 django-widget-tweaks
 django-extensions
 gunicorn
+djangorestframework-gis
