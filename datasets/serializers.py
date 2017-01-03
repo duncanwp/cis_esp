@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Campaign, Dataset, Measurement, MeasurementFile
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 
 class CampaignSerializer(serializers.ModelSerializer):
@@ -9,13 +10,15 @@ class CampaignSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class DatasetSerializer(serializers.ModelSerializer):
+class DatasetSerializer(GeoFeatureModelSerializer):
 
     platform_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Dataset
-        fields = '__all__'
+        # Set the spatial extent as a geo field for serialization
+        geo_field = "spatial_extent"
+        fields = ('id', 'name', 'platform_type', 'platform_name', 'region', 'public')
 
     def get_platform_type(self, obj):
         return obj.get_platform_type_display()
@@ -33,8 +36,10 @@ class MeasurementSerializer(serializers.ModelSerializer):
         return obj.get_measurement_type_display()
 
 
-class MeasurementFileSerializer(serializers.ModelSerializer):
+class MeasurementFileSerializer(GeoFeatureModelSerializer):
 
     class Meta:
         model = MeasurementFile
-        fields = '__all__'
+        # Set the spatial extent as a geo field for serialization
+        geo_field = "spatial_extent"
+        fields = ('id', 'filename', 'spatial_extent', 'time_start', 'time_end')
