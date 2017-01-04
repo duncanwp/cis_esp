@@ -38,8 +38,9 @@ class Dataset(models.Model):
 
     # Human readable region description
     region = models.CharField(max_length=50, blank=True, null=True)
-    # The actual polygon
-    spatial_extent = models.PolygonField(null=True)
+    # This has to be a collection because there might be more than polygon (for wrapping the dateline) or many points
+    #  (for multi-station campaigns)
+    spatial_extent = models.GeometryCollectionField(null=True)
 
     # Temporal extent
     time_start = models.DateTimeField(null=True)

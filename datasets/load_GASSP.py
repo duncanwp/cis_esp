@@ -660,3 +660,18 @@ def load_gassp_data(test_set=False):
             t_start = timezone.make_aware(t_start, timezone.UTC())
             t_end = timezone.make_aware(t_end, timezone.UTC())
             md.measurementfile_set.create(spatial_extent=geom, time_start=t_start, time_end=t_end, filename=f)
+
+
+def clean_GASSP_datasets(buffer_width=2.0):
+    """
+    Add a dataset name and region to each Dataset if they aren't present
+    """
+    from django.contrib.gis.geos import GeometryCollection
+    for d in Dataset.objects.all():
+        if d.name is None:
+            d.name = d.campaign.name + " " + d.get_platform_type_display()
+
+        if d.spatial_extent is None:
+            lines = GeometryCollection(*(mf.spatial_extent for ms in d.measurement_set.all()
+                                            for mf in ms.measurementfile_set.all()))
+            d.spatial_extent = lines.buffer(buffer_width).unary_union.simplify(0.2)
