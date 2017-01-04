@@ -68,7 +68,8 @@
                 'weight': 1
             };
 
-{#            L.geoJSON({{ geojsonFeature|safe }}, {style: originalDataStyle}).addTo(mymap);#}
+            var regionLayer = new L.FeatureGroup();
+            mymap.addLayer(regionLayer);
 
         </script>
 
@@ -81,6 +82,26 @@
                             data_to_select(json, '#id_datasets');
                         },
                         "json");
+                });
+            });
+
+            {#  Script to update the map box based on changes to the dataset box  #}
+            $(function () {
+                $('#id_datasets').change(function () {
+                    // Clear the existing layers
+                    regionLayer.clearLayers();
+                    // Fetch the selected datasets
+                    var datasets = $('#id_datasets').find(':selected');
+                    if( datasets.length > 0) {
+                        // For each dataset fetch the data geometry (which is already GeoJSON) then add the layer
+                        datasets.each(function (i, selected) {
+                            $.get("../api/datasets/"+selected.value,
+                            function (json) {
+                                L.geoJSON(json.geometry, {style: originalDataStyle}).addTo(regionLayer)
+                            },
+                            "json");
+                        });
+                    }
                 });
             });
 
