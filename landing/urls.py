@@ -14,7 +14,6 @@ router.register(r'measurement-files', datasets.MeasurementFileViewSet)
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^subset/', subset.index, name='index'),
-    url(r'^datasets/parent-to-children/$', datasets.parent_to_children),
     url(r'^datasets/', datasets.index, name='index'),
     url(r'^api/', include(router.urls, namespace='api')),
 ]
