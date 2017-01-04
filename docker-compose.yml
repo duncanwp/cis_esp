@@ -6,8 +6,8 @@ web:
   links:
     - postgis:postgis
   volumes:
-    - /usr/src/app
-    - /usr/src/app/static
+    - /cis-esp
+    - /cis-esp/static
   env_file: dev.env
 
 nginx:
