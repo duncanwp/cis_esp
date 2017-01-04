@@ -674,4 +674,4 @@ def clean_GASSP_datasets(buffer_width=2.0):
         if d.spatial_extent is None:
             lines = GeometryCollection(*(mf.spatial_extent for ms in d.measurement_set.all()
                                             for mf in ms.measurementfile_set.all()))
-            d.spatial_extent = lines.buffer(buffer_width).unary_union.simplify(0.2)
+            d.spatial_extent = GeometryCollection(lines.buffer(buffer_width).unary_union.simplify(0.2))
