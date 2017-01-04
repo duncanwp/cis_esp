@@ -14,13 +14,13 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-env_file = os.environ.get('PROJECT_ENV_FILE', BASE_DIR + "/dev.env")
+env_file = os.environ.get('PROJECT_ENV_FILE', BASE_DIR + "/../dev.env")
 try:
     with open(env_file) as f:
         proj_envs = dict(line.strip().split('=', maxsplit=1) for line in f)
         os.environ.update(proj_envs)
 except IOError:
-    print("No env file found")
+    print("No env file found at: " + env_file)
 
 
 def env_var(key, default=None):
