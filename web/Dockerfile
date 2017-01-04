@@ -14,7 +14,7 @@ RUN pip install -r requirements.txt
 # Add all the project code
 ADD . /cis-esp
 
-RUN mkdir media static logs
+RUN mkdir media logs
 VOLUME ["/cis-esp/media/", "/cis-esp/logs/"]
 
 # Port to expose
