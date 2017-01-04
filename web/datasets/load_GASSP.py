@@ -14,7 +14,8 @@ data_path = join(local_data, 'gassp_data', 'Level_2_1')
 def new_platform(region, platform, campaign=None, name=None, **kwargs):
     # Flatten the various measurement campaigns
     measurements = [m for k, ml in kwargs.items() for m in ml if ml is not None]
-    cp, _ = Dataset.objects.get_or_create(region=region, platform_type=platform, name=name, campaign=campaign)
+    cp, _ = Dataset.objects.get_or_create(region=region, platform_type=platform, name=name, campaign=campaign,
+                                          is_gridded=False)
     cp.measurement_set.add(*measurements)
     # cp.measurement_campaigns = measurements
     return cp

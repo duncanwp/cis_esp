@@ -19,7 +19,8 @@ def load_caliop_data(dirpath, test_set=False):
                                platform_type='SA', source='NASA', public=True, name='CALIOP L2 Aerosol Profile V4',
                                project_URL='https://www-calipso.larc.nasa.gov/resources/calips', region='Global',
                                spatial_extent=GeometryCollection(GLOBAL_EXTENT).wkt,
-                               owner=User.objects.filter(username='duncan').first(), campaign=c)
+                               owner=User.objects.filter(username='duncan').first(), campaign=c,
+                               is_gridded=False)
 
     pbc = Measurement(measurement_type='PBC', dataset=d)
     tbc = Measurement(measurement_type='TBC', dataset=d)

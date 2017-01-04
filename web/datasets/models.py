@@ -56,6 +56,8 @@ class Dataset(models.Model):
 
     public = models.BooleanField(default=False)
 
+    is_gridded = models.BooleanField()
+
     def __str__(self):
         if self.name is None:
             return "{} ({})".format(self.campaign.name, self.get_platform_type_display())
