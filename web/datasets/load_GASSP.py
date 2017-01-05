@@ -672,7 +672,15 @@ def clean_GASSP_datasets(buffer_width=2.0):
         if d.name is None:
             d.name = d.campaign.name + " " + d.get_platform_type_display()
 
+        print("Processing {}...".format(d.name))
         if d.spatial_extent is None:
-            lines = GeometryCollection(*(mf.spatial_extent for ms in d.measurement_set.all()
-                                            for mf in ms.measurementfile_set.all()))
-            d.spatial_extent = GeometryCollection(lines.buffer(buffer_width).unary_union.simplify(0.2))
+            # Get the combined geometry of all of the files from all of the measurements
+            geom = GeometryCollection(*(mf.spatial_extent for ms in d.measurement_set.all() for mf in ms.measurementfile_set.all()))
+            print("Found {} geometries".format(len(geom)))
+            if len(geom) > 0:
+                unified_extent = geom.buffer(buffer_width).unary_union.simplify(0.2)
+                d.spatial_extent = GeometryCollection(unified_extent)
+
+        d.save()
+        print("Done")
+    print("Finished.")
