@@ -103,10 +103,10 @@ WSGI_APPLICATION = 'cis_esp.wsgi.application'
 DATABASES = {
     'default': {
          'ENGINE': 'django.contrib.gis.db.backends.postgis',
-         'NAME': os.environ['DATABASE_NAME'],
-         'HOST': os.environ['DATABASE_HOST'],
-         'USER': os.environ['DATABASE_USER'],
-         'PASSWORD': os.environ['DATABASE_PASSWORD']
+         'NAME': os.environ['POSTGRES_DB'],
+         'HOST': os.environ['POSTGRES_HOST'],
+         'USER': os.environ['POSTGRES_USER'],
+         'PASSWORD': os.environ['POSTGRES_PASSWORD']
     },
 }
 
@@ -149,9 +149,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 GDAL_LIBRARY_PATH = r'C:\Users\duncan\Anaconda3\envs\cis_esp\Library\bin\gdal201.dll'
 

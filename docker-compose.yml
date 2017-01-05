@@ -9,6 +9,8 @@ web:
     - /cis-esp
     - /cis-esp/static
   env_file: dev.env
+  environment:
+    - POSTGRES_HOST=postgis
 
 nginx:
   restart: always
@@ -29,3 +31,4 @@ postgis:
     - "5432:5432"
   volumes:
     - pgdata:/var/lib/postgresql/data/
+  env_file: dev.env
