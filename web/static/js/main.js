@@ -10,8 +10,8 @@ function data_to_select(data, select_selector) {
     var opt = $(select_selector);
     var old_val = opt.val();
     opt.html('');
-    $.each(data.results.features, function () {
-        opt.append($('<option/>').val(this.id).text(this.properties.name));
+    $.each(data.results, function () {
+        opt.append($('<option/>').val(this.id).text(this.name));
     });
     opt.val(old_val);
     opt.change();

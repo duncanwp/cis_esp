@@ -5,6 +5,7 @@
     {#    Bring in the media necassary for the form #}
     {{ form.media }}
     {#  Bring in leaflet  #}
+    <link rel="stylesheet" href="{% static 'css/cis_esp.css' %}" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
     <link rel="stylesheet" href="{% static 'leaflet/leaflet.draw/leaflet.draw.css' %}" />
     <script src="{% static 'js/main.js' %}"></script>
@@ -97,7 +98,7 @@
                         datasets.each(function (i, selected) {
                             $.get("../api/datasets/"+selected.value,
                             function (json) {
-                                L.geoJSON(json.geometry, {style: originalDataStyle}).addTo(regionLayer)
+                                L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(regionLayer)
                             },
                             "json");
                         });
