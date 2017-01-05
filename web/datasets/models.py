@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import User
 
 
@@ -51,8 +52,8 @@ class Dataset(models.Model):
     principal_investigator = models.CharField(max_length=50, blank=True, null=True)
     source = models.CharField(max_length=50, blank=True, null=True)
 
-    # Deleting a user also deletes their datasets
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    # Deleting a user does NOT delete their datasets
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     public = models.BooleanField(default=False)
 
@@ -164,3 +165,48 @@ class MeasurementFile(models.Model):
 
     def __str__(self):
         return "{}".format(self.filename)
+
+
+class CIS_Job(models.Model):
+    """
+    A CIS job is a single CIS transaction which takes an input dataset (and optionally a sampling dataset) and
+     produces an output dataset.
+    """
+    # Protect datasets with associated jobs
+    input = models.ForeignKey(Dataset, on_delete=models.PROTECT, related_name="input_dataset")
+    output = models.ForeignKey(Dataset, on_delete=models.PROTECT, related_name="output_dataset")
+
+    # Optional dataset used for collocation jobs only
+    sample = models.ForeignKey(Dataset, on_delete=models.PROTECT, null=True, related_name="sample_dataset")
+
+    # Job types. These could be subclasses but a type is fine for now.
+    COLLOCATE = 'C'
+    SUBSET = 'S'
+    AGGREGATE = 'A'
+
+    JOB_TYPE_CHOICES = (
+        (COLLOCATE, 'Collocate'),
+        (SUBSET, 'Subset'),
+        (AGGREGATE, 'Aggregate')
+    )
+    type = models.CharField(max_length=1, choices=JOB_TYPE_CHOICES)
+
+    # Command arguments
+    arguments = JSONField()
+
+    # Job status - this should reflect the ARC-CE statuses
+    PENDING = 'P'
+    RUNNING = 'R'
+    FINISHED = 'F'
+    ERROR = 'E'
+
+    STATUS_CHOICES = (
+        (PENDING, 'Pending'),
+        (RUNNING, 'Running'),
+        (FINISHED, 'Finished'),
+        (ERROR, 'Error')
+    )
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
+
+    # Deleting a user does NOT delete their jobs
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
