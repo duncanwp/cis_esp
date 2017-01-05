@@ -317,9 +317,9 @@ ace1_air = new_platform(region="NA", platform=Dataset.AIRCRAFT, CN=[ace1_cn], CC
 ace2 = new_Campaign("ACE2", platform=Dataset.SHIP, region="EU", CN=[ace2_cn_ship], SO4=[ace2_so4_ship])
 
 accacia, _ = Campaign.objects.get_or_create(name="ACCACIA")
-accacia_ship = new_platform(name="ACCACIA_ship", platform=Dataset.SHIP, region="Arctic", SO4=[accacia_so4_ship],
+accacia_ship = new_platform(platform=Dataset.SHIP, region="Arctic", SO4=[accacia_so4_ship],
                             campaign=accacia)
-accacia_aircraft = new_platform(name="ACCACIA_air", platform=Dataset.AIRCRAFT, region="Arctic", SO4=[accacia_so4],
+accacia_aircraft = new_platform(platform=Dataset.AIRCRAFT, region="Arctic", SO4=[accacia_so4],
                                 campaign=accacia)
 
 aceasia, _ = Campaign.objects.get_or_create(name="ACEASIA")
@@ -334,9 +334,9 @@ amaze = new_Campaign("AMAZE-08", CCN=amaze_ccn, platform=Dataset.GROUND_STATION,
 amma = new_Campaign("AMMA", platform=Dataset.AIRCRAFT, region="AF", SO4=[amma_so4])
 
 amf_stations, _ = Campaign.objects.get_or_create(name="AMF_stations")
-amf_cape_cod = new_platform(region="NA", platform=Dataset.GROUND_STATION, name="CapeCod",
+amf_cape_cod = new_platform(region="NA", platform=Dataset.GROUND_STATION, name="AMF CapeCod",
                             campaign=amf_stations)
-amf_manacapuru = new_platform(region="SA", platform=Dataset.GROUND_STATION, name="Manacapuru",
+amf_manacapuru = new_platform(region="SA", platform=Dataset.GROUND_STATION, name="AMF Manacapuru",
                               campaign=amf_stations)
 
 
@@ -348,18 +348,18 @@ appraise = new_Campaign("APPRAISE", CN=[appraise_cn], CCN=appraise_ccn, platform
 arcpac = new_Campaign("ARCPAC2008", CCN=arcpac_ccn, SO4=[arcpac_so4], CN=[arcpac_cn], platform=Dataset.AIRCRAFT)
 
 arctas, _ = Campaign.objects.get_or_create(name="ARCTAS")
-arctas_pc3 = new_platform(platform=Dataset.AIRCRAFT, region="NA", name="PC3", CN=[arctas_cn_pc3], CCN=arctas_ccn_pc3, SO4=[arctas_so4_pc3],
+arctas_pc3 = new_platform(platform=Dataset.AIRCRAFT, region="NA", name="ARCTAS PC3", CN=[arctas_cn_pc3], CCN=arctas_ccn_pc3, SO4=[arctas_so4_pc3],
                           campaign=arctas)
-arctas_dc8 = new_platform(platform=Dataset.AIRCRAFT, region="NA", name="DC8", CN=[arctas_cn_dc8], CCN=arctas_ccn_dc8, SO4=[arctas_so4_dc8],
+arctas_dc8 = new_platform(platform=Dataset.AIRCRAFT, region="NA", name="ARCTAS DC8", CN=[arctas_cn_dc8], CCN=arctas_ccn_dc8, SO4=[arctas_so4_dc8],
                           campaign=arctas)
 
 bird_island = new_Campaign("BirdIsland", platform=Dataset.GROUND_STATION)
 bortas = new_Campaign("BORTAS", platform=Dataset.AIRCRAFT, SO4=[bortas_so4])
 
 calnex, _ = Campaign.objects.get_or_create(name="CALNEX")
-calnex_air = new_platform(region="NA", platform=Dataset.AIRCRAFT, CN=[calnex_cn], CCN=calnex_ccn_air, SO4=[calnex_so4], name="CALNEX_air",
+calnex_air = new_platform(region="NA", platform=Dataset.AIRCRAFT, CN=[calnex_cn], CCN=calnex_ccn_air, SO4=[calnex_so4],
                           campaign=calnex)
-calnex_ship = new_platform(region="NA", platform=Dataset.SHIP, CN=[calnex_cn_ship], CCN=calnex_ccn_ship, SO4=[calnex_so4_ship], name="CALNEX_ship",
+calnex_ship = new_platform(region="NA", platform=Dataset.SHIP, CN=[calnex_cn_ship], CCN=calnex_ccn_ship, SO4=[calnex_so4_ship],
                            campaign=calnex)
 
 # care_beijing = new_Campaign("CAREBeijing", platform=Dataset.GROUND_STATION, region="EA", CN=[care_beijing_cn], CCN=care_beijing_ccn)
@@ -372,9 +372,9 @@ cope = new_Campaign("COPE", platform=Dataset.AIRCRAFT, SO4=[cope_so4])
 cops = new_Campaign("COPS", platform=Dataset.GROUND_STATION)
 
 dc3, _ = Campaign.objects.get_or_create(name="DC3")
-dc3_dc8 = new_platform(name="DC8", platform=Dataset.AIRCRAFT, region="NA", CN=[dc3_cn_dc8], CCN=dc3_ccn_dc8, SO4=[dc3_so4],
+dc3_dc8 = new_platform(name="DC3 DC8", platform=Dataset.AIRCRAFT, region="NA", CN=[dc3_cn_dc8], CCN=dc3_ccn_dc8, SO4=[dc3_so4],
                        campaign=dc3)
-dc3_falcon = new_platform(name="Falcon", platform=Dataset.AIRCRAFT, region="NA", CN=[dc3_cn_falcon],
+dc3_falcon = new_platform(name="DC3 Falcon", platform=Dataset.AIRCRAFT, region="NA", CN=[dc3_cn_falcon],
                           campaign=dc3)
 
 discoveraq = new_Campaign("DISCOVERAQ", platform=Dataset.AIRCRAFT, SO4=[discoveraq_so4])
@@ -395,15 +395,15 @@ op3 = new_Campaign("OP3", platform=Dataset.GROUND_STATION, SO4=[op3_so4])
 pase = new_Campaign("PASE", CN=[pase_cn], CCN=pase_ccn, SO4=[pase_ams], platform=Dataset.AIRCRAFT, region="NA")
 
 pem_tropics_a, _ = Campaign.objects.get_or_create(name="PEMTropicsA")
-pem_tropics_a_dc8 = new_platform(name="DC8", platform=Dataset.AIRCRAFT, region="NA", SO4=[pem_tropics_a_so4], CN=[pem_tropics_a_cn],
+pem_tropics_a_dc8 = new_platform(name="PEMTropicsA DC8", platform=Dataset.AIRCRAFT, region="NA", SO4=[pem_tropics_a_so4], CN=[pem_tropics_a_cn],
                                  campaign=pem_tropics_a)
-pem_tropics_a_p3b = new_platform(name="P3B", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_a_cn_p3],
+pem_tropics_a_p3b = new_platform(name="PEMTropicsA P3B", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_a_cn_p3],
                                  campaign=pem_tropics_a)
 
 pem_tropics_b, _ = Campaign.objects.get_or_create(name="PEMTropicsB")
-pem_tropics_b_dc8 = new_platform(name="DC8", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_b_cn],
+pem_tropics_b_dc8 = new_platform(name="PEMTropicsB DC8", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_b_cn],
                                  campaign=pem_tropics_b)
-pem_tropics_b_p3b = new_platform(name="P3B", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_b_cn_p3],
+pem_tropics_b_p3b = new_platform(name="PEMTropicsB P3B", platform=Dataset.AIRCRAFT, region="NA", CN=[pem_tropics_b_cn_p3],
                                  campaign=pem_tropics_b)
 
 pem_west_a = new_Campaign("PEMWestA", CN=[pem_west_a_cn], SO4=[pem_west_a_so4], platform=Dataset.AIRCRAFT, region="NP")
@@ -419,27 +419,27 @@ ronoco = new_Campaign("RONOCO", CN=[ronoco_cn], CCN=ronoco_ccn, SO4=[ronoco_so4]
 seac4rs = new_Campaign("SEAC4RS", CN=[seac4rs_cn], CCN=seac4rs_ccn, SO4=[seac4rs_so4], platform=Dataset.AIRCRAFT, region="NA")
 
 texaqs, _ = Campaign.objects.get_or_create(name="TEXAQS2006")
-texaqs_ship = new_platform(region="NA", platform=Dataset.SHIP, CN=[texaqs_cn_ship], CCN=texasqs_ccn_ship, SO4=[texaqs_so4_ship], name='TEXASQS_ship',
+texaqs_ship = new_platform(region="NA", platform=Dataset.SHIP, CN=[texaqs_cn_ship], CCN=texasqs_ccn_ship, SO4=[texaqs_so4_ship],
                            campaign=texaqs)
-texaqs_air = new_platform(region="NA", platform=Dataset.AIRCRAFT, CN=[texaqs_cn], CCN=texaqs_ccn_air, SO4=[texaqs_so4], name='TEXASQS_air',
+texaqs_air = new_platform(region="NA", platform=Dataset.AIRCRAFT, CN=[texaqs_cn], CCN=texaqs_ccn_air, SO4=[texaqs_so4],
                           campaign=texaqs)
 
 trace_a = new_Campaign("TRACEA", CN=[trace_a_cn], platform=Dataset.AIRCRAFT)
 
 trace_p, _ = Campaign.objects.get_or_create(name="TRACEP")
-trace_p_dc8 = new_platform(region="EA", platform=Dataset.AIRCRAFT, CN=[trace_p_cn_dc8], name='DC8',
+trace_p_dc8 = new_platform(region="EA", platform=Dataset.AIRCRAFT, CN=[trace_p_cn_dc8], name='TRACEP DC8',
                            campaign=trace_p)
-trace_p_p3b = new_platform(region="EA", platform=Dataset.AIRCRAFT, CN=[trace_p_cn, trace_p_ucn], name='P3B',
+trace_p_p3b = new_platform(region="EA", platform=Dataset.AIRCRAFT, CN=[trace_p_cn, trace_p_ucn], name='TRACEP P3B',
                            campaign=trace_p)
 
 trompex = new_Campaign("TROMPEX", CCN=trompex_ccn, platform=Dataset.AIRCRAFT)
 
 vocals, _ = Campaign.objects.get_or_create(name="VOCALS")
-vocals_c130 = new_platform(name="C-130", CN=[vocals_cn], CCN=vocals_ccn, SO4=[vocals_so4_c130], platform=Dataset.AIRCRAFT, region="SA",
+vocals_c130 = new_platform(name="VOCALS C-130", CN=[vocals_cn], CCN=vocals_ccn, SO4=[vocals_so4_c130], platform=Dataset.AIRCRAFT, region="SA",
                            campaign=vocals)
-vocals_faam = new_platform(name="FAAM", CN=[vocals_cn_faam], CCN=vocals_faam_ccn, SO4=[vocals_so4_faam], platform=Dataset.AIRCRAFT, region="SA",
+vocals_faam = new_platform(name="VOCALS FAAM", CN=[vocals_cn_faam], CCN=vocals_faam_ccn, SO4=[vocals_so4_faam], platform=Dataset.AIRCRAFT, region="SA",
                            campaign=vocals)
-vocals_ship = new_platform(name="ship", CN=[vocals_cn_ship], SO4=[vocals_so4_ship], platform=Dataset.SHIP, region="SA",
+vocals_ship = new_platform(name="VOCALS Ship", CN=[vocals_cn_ship], SO4=[vocals_so4_ship], platform=Dataset.SHIP, region="SA",
                            campaign=vocals)
 
 weybourne = new_Campaign("Weybourne", platform=Dataset.GROUND_STATION)
@@ -678,9 +678,10 @@ def clean_GASSP_datasets(buffer_width=2.0):
             geom = GeometryCollection(*(mf.spatial_extent for ms in d.measurement_set.all() for mf in ms.measurementfile_set.all()))
             print("Found {} geometries".format(len(geom)))
             if len(geom) > 0:
-                unified_extent = geom.buffer(buffer_width).unary_union.simplify(0.2)
+                unified_extent = geom.simplify(0.2).buffer(buffer_width).unary_union.simplify(0.2)
                 d.spatial_extent = GeometryCollection(unified_extent)
 
+        # TODO Add temporal extent too
         d.save()
         print("Done")
     print("Finished.")
