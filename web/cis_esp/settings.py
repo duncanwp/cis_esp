@@ -149,7 +149,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
 
 GDAL_LIBRARY_PATH = r'C:\Users\duncan\Anaconda3\envs\cis_esp\Library\bin\gdal201.dll'
 
