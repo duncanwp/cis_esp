@@ -74,16 +74,3 @@ def read_caliop_met_file(filepath):
                          spatial_extent=line.wkt, filename=filepath)
 
     return mf
-
-
-def plot_test():
-    from .utils import plot_shape
-    from shapely.wkt import loads
-    mf = read_caliop_met_file("/Users/watson-parris/Local data/2008_metfiles/CAL_LID_L2_05kmAPro-Standard-V4-10.2007-12-31T23-51-28ZN.hdf.met")
-    line = mf.spatial_extent
-    print(line.wkt)
-    plot_shape(loads(line.wkt))
-
-
-if __name__ == '__main__':
-    load_caliop_data('/Users/watson-parris/Local data/2008_metfiles', test_set=True)
