@@ -16,3 +16,8 @@ You can add test data by doing::
 Or add a larger test set by copying the data in first::
 
   docker cp large_test_fixtures.json <container>:large_test_fixtures.json
+
+To wipe the database type::
+
+  docker volume rm pgdata
+
