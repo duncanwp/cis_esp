@@ -2,12 +2,13 @@
 {% load staticfiles%}
 
 {% block head %}
-    {#    Bring in the media necassary for the form #}
+    {#    Bring in the CSS necassary for the form #}
     {{ form.media }}
-    {#  Bring in leaflet  #}
     <link rel="stylesheet" href="{% static 'css/cis_esp.css' %}" />
+    {#  Bring in leaflet  #}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
     <link rel="stylesheet" href="{% static 'leaflet/leaflet.draw/leaflet.draw.css' %}" />
+    {#  Bring in necassary js  #}
     <script src="{% static 'js/main.js' %}"></script>
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 {% endblock %}
