@@ -9,5 +9,4 @@ Contents:
    :numbered:
 
    installation
-   design
    maintenance_and_development
