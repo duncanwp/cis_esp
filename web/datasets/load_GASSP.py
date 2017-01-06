@@ -16,7 +16,7 @@ def new_platform(region, platform, campaign=None, name=None, **kwargs):
     measurements = [m for k, ml in kwargs.items() for m in ml if ml is not None]
     cp, _ = Dataset.objects.get_or_create(region=region, platform_type=platform, name=name, campaign=campaign,
                                           is_gridded=False)
-    cp.measurement_set.add(*measurements)
+    cp.measurement_set.add(*measurements, bulk=False)
     # cp.measurement_campaigns = measurements
     return cp
 
@@ -681,7 +681,18 @@ def clean_GASSP_datasets(buffer_width=2.0):
                 unified_extent = geom.simplify(0.2).buffer(buffer_width).unary_union.simplify(0.2)
                 d.spatial_extent = GeometryCollection(unified_extent)
 
-        # TODO Add temporal extent too
+        if d.time_start is None:
+            print("Setting time extent")
+            try:
+
+                measurement_starts = [ms.measurementfile_set.earliest('time_start').time_start for ms in d.measurement_set.all()]
+                measurement_ends = [ms.measurementfile_set.latest('time_end').time_end for ms in d.measurement_set.all()]
+
+                d.time_start = min(measurement_starts)
+                d.time_end = max(measurement_ends)
+            except MeasurementFile.DoesNotExist:
+                print("Unable to determine time extent")
+
         d.save()
         print("Done")
     print("Finished.")
