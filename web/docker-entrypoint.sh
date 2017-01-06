@@ -2,7 +2,7 @@
 # From http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
 
 # Wait for the DB to be up...
-sleep 5
+sleep 10
 
 python manage.py migrate                  # Apply database migrations
 python manage.py collectstatic --noinput  # Collect static files
