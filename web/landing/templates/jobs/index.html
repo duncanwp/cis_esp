@@ -1,0 +1,16 @@
+{% extends "landing/header.html" %}
+{% load staticfiles%}
+
+{% block head %}
+    {#    Bring in the media necassary for the form #}
+    {{ form.media }}
+    {#  Bring in leaflet  #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
+    <link rel="stylesheet" href="{% static 'leaflet/leaflet.draw/leaflet.draw.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+    <h4>Jobs</h4>
+
+{% endblock %}
