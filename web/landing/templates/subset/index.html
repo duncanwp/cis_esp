@@ -28,33 +28,81 @@
 
     <form class="form-horizontal" role="form" action="." method="post" id="form">
         {% csrf_token %}
-        {% for field in form %}
-            {% if field.errors %}
-                <div class="form-group has-error">
-                    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
-                    <div class="col-sm-10">
-                        {{ field|attr:"class:form-control" }}
-                        <span class="help-block">
-                            {% for error in  field.errors %}{{ error }}{% endfor %}
-                        </span>
-                    </div>
-                </div>
-            {% else %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
-                    <div class="col-sm-10">
-                        {{ field|attr:"class:form-control" }}
-                        {% if field.help_text %}
-                            <p class="help-block">
-                                <small>{{ field.help_text }}</small>
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
-        {% endfor %}
 
         <div class="form-group">
+            <label class="col-sm-2 control-label" for="id_measuremet">Measurement</label>
+            <div class="col-sm-10">
+                {{ form.measurement|attr:"class:form-control" }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="id_dataset">Dataset</label>
+            <div class="col-sm-10">
+                {{ form.dataset|attr:"class:form-control" }}
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="form-group">
+            <div class="btn-group col-sm-offset-2 " data-toggle="buttons">
+                <label class="btn btn-primary active" onclick="subset_manually();" id="manually" >
+                    <input type="radio" name="subset_options" checked> Manually
+                </label>
+                <label class="btn btn-primary" onclick="subset_by_dataset();" id="by_dataset">
+                    <input type="radio" name="subset_options"> By dataset
+                </label>
+                <label class="btn btn-primary" onclick="subset_by_region();" id="by_region">
+                    <input type="radio" name="subset_options"> By region
+                </label>
+            </div>
+        </div>
+
+        <div class="collapse in" id="date_selection">
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="id_start_date">Start Date</label>
+                <div class="col-sm-10">
+                    {{ form.start_date|attr:"class:form-control" }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="id_end_date">End Date</label>
+                <div class="col-sm-10">
+                    {{ form.end_date|attr:"class:form-control" }}
+                </div>
+            </div>
+        </div>
+
+        <div class="collapse" id="subset_by_dataset">
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="id_subset_dataset">Dataset</label>
+                <div class="col-sm-10">
+                    <div class="alert alert-warning" role="alert">
+                        Note that this is <em>not</em> a collocation. The input data is
+                        simply subsetted to the rough spatial and temporal extent of the selected dataset.
+                    </div>
+                    {{ form.subset_dataset|attr:"class:form-control" }}
+                </div>
+            </div>
+        </div>
+
+        <div class="collapse" id="subset_by_region">
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="id_subset_region">Region</label>
+                <div class="col-sm-10">
+                    {# TODO #}
+                    <div class="alert alert-danger" role="alert">
+                        This is not yet implemented
+                    </div>
+                    {{ form.subset_region|attr:"class:form-control" }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="mapid">Spatial extent</label>
             <div class="col-sm-offset-2 col-sm-10" id="mapid"></div>
         </div>
 
@@ -94,9 +142,6 @@
                         drawError: {
                             color: '#e1e100', // Color the shape will turn when intersects
                             message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
-                        },
-                        shapeOptions: {
-                            color: '#bada55'
                         }
                     },
                     circle: false, // Turns off this drawing tool
@@ -135,11 +180,50 @@
 
         <script type="text/javascript">
 
+            function subset_manually() {
+                $('#date_selection').collapse('show');
+                $('.leaflet-draw.leaflet-control').show();
+
+                $('#subset_by_dataset').collapse('hide');
+                $('#subset_by_region').collapse('hide');
+            }
+
+            function subset_by_dataset() {
+                $('#date_selection').collapse('hide');
+                $('.leaflet-draw.leaflet-control').hide();
+                editableLayers.clearLayers();
+
+                $('#subset_by_dataset').collapse('show');
+                $('#subset_by_region').collapse('hide');
+            }
+
+            function subset_by_region() {
+                $('#date_selection').collapse('show');
+                $('.leaflet-draw.leaflet-control').hide();
+                editableLayers.clearLayers();
+
+                $('#subset_by_dataset').collapse('hide');
+                $('#subset_by_region').collapse('show');
+            }
+
             $("#form").submit(function (eventObj) {
-                $('<input />').attr('type', 'hidden')
-                    .attr('name', "spatial_extent")
-                    .attr('value', toWKT(editableLayers.getLayers()))
-                    .appendTo('#form');
+                var wkt;
+                if ($('#manually').hasClass('active')) {
+                    $('<input />').attr('type', 'hidden')
+                        .attr('name', "spatial_extent")
+                        .attr('value', toWKT(editableLayers.getLayers()))
+                        .appendTo('#form');
+                }
+                else if ($('#by_dataset').hasClass('active')) {
+                    $('<input />').attr('type', 'hidden')
+                        .attr('name', "subset_dataset")
+                        .attr('value', $('#id_subset_dataset').val())
+                        .appendTo('#form');
+                }
+                else if ($('#by_region').hasClass('active')) {
+
+                }
+
                 return true;
             });
 
@@ -167,6 +251,26 @@
                             $.get("../api/datasets/" + selected.value,
                                 function (json) {
                                     L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(regionLayer)
+                                },
+                                "json");
+                        });
+                    }
+                });
+            });
+
+            {#  Script to update the map box based on changes to the SUBSET dataset box  #}
+            $(function () {
+                $('#id_subset_dataset').change(function () {
+                    // Clear the existing layers
+                    editableLayers.clearLayers();
+                    // Fetch the selected datasets
+                    var datasets = $('#id_subset_dataset').find(':selected');
+                    if (datasets.length > 0) {
+                        // For each dataset fetch the data geometry (which is already GeoJSON) then add the layer
+                        datasets.each(function (i, selected) {
+                            $.get("../api/datasets/" + selected.value,
+                                function (json) {
+                                    editableLayers.addLayer(L.geoJSON(json.spatial_extent))
                                 },
                                 "json");
                         });

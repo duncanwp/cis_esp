@@ -14,3 +14,5 @@ class DataSelection(forms.Form):
     end_date = forms.DateField(widget=forms.SelectDateWidget(years=range(1960, 2017)), initial=datetime(2016,12,31))
 
     # The spatial extent gets added by the JS
+
+    subset_dataset = forms.ModelChoiceField(queryset=model.Dataset.objects.all())
