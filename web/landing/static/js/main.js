@@ -16,3 +16,14 @@ function data_to_select(data, select_selector) {
     opt.val(old_val);
     opt.change();
 }
+
+function toWKT(layer) {
+    /*
+        Convert a layer (array) object to a WKT representation using Wicket
+     */
+    var wkt = new Wkt.Wkt();
+
+    // Deconstruct an existing point feature e.g. google.maps.Marker instance
+    wkt.fromObject(layer[0]);
+    return wkt
+}

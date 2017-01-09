@@ -1,96 +1,180 @@
 {% extends "landing/header.html" %}
-{% load staticfiles%}
+{% load staticfiles %}
 
 {% block head %}
-    {#    Bring in the media necassary for the form #}
+    {#    Bring in the CSS necassary for the form #}
     {{ form.media }}
+    <link rel="stylesheet" href="{% static 'css/cis_esp.css' %}"/>
     {#  Bring in leaflet  #}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
-    <link rel="stylesheet" href="{% static 'leaflet/leaflet.draw/leaflet.draw.css' %}" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css"/>
+    <link rel="stylesheet" href="{% static 'leaflet/leaflet.draw/leaflet.draw.css' %}"/>
+    {#  Bring in necassary js  #}
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 {% endblock %}
 
 {% block content %}
 
-    {%  include "common/includes/leaflet_includes.html" %}
+    {% include "common/includes/leaflet_includes.html" %}
 
-{# The order of these imports really matters - see http://leaflet.github.io/Leaflet.draw/docs/examples/full.html for an example #}
+    <script src="{% static 'js/wicket.js' %}"></script>
+    <script src="{% static 'js/wicket-leaflet.js' %}"></script>
+    {# The order of these imports really matters - see http://leaflet.github.io/Leaflet.draw/docs/examples/full.html for an example #}
 
     <h4>Select the data to subset</h4>
 
-    {% include 'common/includes/generic_form.html' %}
 
-     <div id="mapid"></div>
+    {% load i18n widget_tweaks %}
 
-    <script type="text/javascript">
-        var mymap = L.map('mapid').setView([20, 0], 1.5);
+    <form class="form-horizontal" role="form" action="." method="post" id="form">
+        {% csrf_token %}
+        {% for field in form %}
+            {% if field.errors %}
+                <div class="form-group has-error">
+                    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
+                    <div class="col-sm-10">
+                        {{ field|attr:"class:form-control" }}
+                        <span class="help-block">
+                            {% for error in  field.errors %}{{ error }}{% endfor %}
+                        </span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
+                    <div class="col-sm-10">
+                        {{ field|attr:"class:form-control" }}
+                        {% if field.help_text %}
+                            <p class="help-block">
+                                <small>{{ field.help_text }}</small>
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
 
-        L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-                    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-                    maxZoom: 5,
-                    id: 'mapbox.satellite',
-                    accessToken: '{{ LEAFLET_TOKEN }}'
-                }).addTo(mymap);
-        var bounds = [[54.559322, -5.767822], [56.1210604, -3.021240]];
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10" id="mapid"></div>
+        </div>
 
-        // create an orange rectangle
-{#        L.rectangle(bounds, {color: "#ff7800", weight: 1}).addTo(mymap);#}
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
+            </div>
+        </div>
 
-        var originalDataStyle = {
-            'color': "#ff7800",
-            'weight': 1
-        };
+        <script type="text/javascript">
+            var mymap = L.map('mapid').setView([20, 0], 1.5);
 
-        L.geoJSON({{ geojsonFeature|safe }}, {style: originalDataStyle}).addTo(mymap);
+            L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+                attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                maxZoom: 5,
+                noWrap: true,
+                id: 'mapbox.satellite',
+                accessToken: 'pk.eyJ1IjoiZHVuY2Fud3AiLCJhIjoiY2l3d2F2eHRkMDBsZjJ6cHJheWxhbDNtMyJ9.PzUwtNYFXI0CnqG6GHFMhw'
+            }).addTo(mymap);
 
-        var editableLayers = new L.FeatureGroup();
-        mymap.addLayer(editableLayers);
+            var originalDataStyle = {
+                'color': "#ff7800",
+                'weight': 1
+            };
 
-        var options = {
-            draw: {
-                polyline: {
-                    shapeOptions: {
-                        color: '#f357a1',
-                        weight: 10
-                    }
-                },
-                polygon: {
-                    allowIntersection: false, // Restricts shapes to simple polygons
-                    drawError: {
-                        color: '#e1e100', // Color the shape will turn when intersects
-                        message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+            var regionLayer = new L.FeatureGroup();
+            mymap.addLayer(regionLayer);
+
+            var editableLayers = new L.FeatureGroup();
+            mymap.addLayer(editableLayers);
+
+            var options = {
+                draw: {
+                    polyline: false,
+                    polygon: {
+                        allowIntersection: false, // Restricts shapes to simple polygons
+                        drawError: {
+                            color: '#e1e100', // Color the shape will turn when intersects
+                            message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                        },
+                        shapeOptions: {
+                            color: '#bada55'
+                        }
                     },
-                    shapeOptions: {
-                        color: '#bada55'
-                    }
+                    circle: false, // Turns off this drawing tool
+                    rectangle: {
+                        shapeOptions: {
+                            clickable: true
+                        }
+                    },
+                    marker: false
                 },
-                circle: false, // Turns off this drawing tool
-                rectangle: {
-                    shapeOptions: {
-                        clickable: false
+                edit: {
+                    featureGroup: editableLayers, //REQUIRED!!
+                    remove: true
+                }
+            };
+
+            var drawControl = new L.Control.Draw(options);
+
+            mymap.addControl(drawControl);
+
+            mymap.on(L.Draw.Event.CREATED, function (e) {
+                var type = e.layerType,
+                    layer = e.layer;
+
+                if (type === 'marker') {
+                    layer.bindPopup('A popup!');
+                }
+
+                {# Remove any existing layers - we're only allowed one! #}
+                editableLayers.clearLayers();
+
+                editableLayers.addLayer(layer);
+            });
+
+        </script>
+
+        <script type="text/javascript">
+
+            $("#form").submit(function (eventObj) {
+                $('<input />').attr('type', 'hidden')
+                    .attr('name', "spatial_extent")
+                    .attr('value', toWKT(editableLayers.getLayers()))
+                    .appendTo('#form');
+                return true;
+            });
+
+            {#  Script to update the dataset box based on changes to the measurement box  #}
+            $(function () {
+                $('#id_measurement').change(function () {
+                    $.get("../api/datasets/", {format: "json", measurement_type: $(this).val()},
+                        function (json) {
+                            data_to_select(json, '#id_dataset');
+                        },
+                        "json");
+                });
+            });
+
+            {#  Script to update the map box based on changes to the dataset box  #}
+            $(function () {
+                $('#id_dataset').change(function () {
+                    // Clear the existing layers
+                    regionLayer.clearLayers();
+                    // Fetch the selected datasets
+                    var datasets = $('#id_dataset').find(':selected');
+                    if (datasets.length > 0) {
+                        // For each dataset fetch the data geometry (which is already GeoJSON) then add the layer
+                        datasets.each(function (i, selected) {
+                            $.get("../api/datasets/" + selected.value,
+                                function (json) {
+                                    L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(regionLayer)
+                                },
+                                "json");
+                        });
                     }
-                },
-            },
-            edit: {
-                featureGroup: editableLayers, //REQUIRED!!
-                remove: false
-            }
-        };
+                });
+            });
 
-        var drawControl = new L.Control.Draw(options);
-
-        mymap.addControl(drawControl);
-
-        mymap.on(L.Draw.Event.CREATED, function (e) {
-            var type = e.layerType,
-                layer = e.layer;
-
-            if (type === 'marker') {
-                layer.bindPopup('A popup!');
-            }
-
-            editableLayers.addLayer(layer);
-        });
-
-    </script>
+        </script>
+    </form>
 
 {% endblock %}
