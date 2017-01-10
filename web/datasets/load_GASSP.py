@@ -619,7 +619,7 @@ broken_files = ['ARCTAS_AMS_RF02_20080327_r2ict_apr2012.nc',
 
 
 # Methods for actually reading the data
-def load_gassp_data(test_set=False):
+def load_gassp_data(test_set=False, clean=True, **kwargs):
     from cis.data_io.data_reader import DataReader
     from django.contrib.gis.geos import GEOSGeometry
     from glob import glob
@@ -662,7 +662,11 @@ def load_gassp_data(test_set=False):
             t_end = timezone.make_aware(t_end, timezone.UTC())
             md.measurementfile_set.create(spatial_extent=geom, time_start=t_start, time_end=t_end, name=f)
 
+    if clean:
+        print("Cleaning data")
+        clean_GASSP_datasets(**kwargs)
 
+clean_GASSP_datasets
 def clean_GASSP_datasets(buffer_width=2.0):
     """
     Add a dataset name and region to each Dataset if they aren't present
