@@ -1,6 +1,6 @@
 import shapely.geometry as sgeom
 
-GLOBAL_EXTENT = sgeom.box(-180, -90, 180, 90)
+GLOBAL_EXTENT = sgeom.box(-179.999, -89.999, 179.999, 89.999)
 
 IDL = sgeom.LineString(((180, -90), (180, 90)))
 GMT = sgeom.LineString(((0, -90), (0, 90)))
