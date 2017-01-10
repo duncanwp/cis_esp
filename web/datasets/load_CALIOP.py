@@ -6,7 +6,7 @@ def load_caliop_data(dirpath, test_set=False):
     import glob
     from os.path import join
     from django.contrib.auth.models import User
-    from django.contrib.gis.geos import GeometryCollection, Polygon
+    from .utils import GLOBAL_EXTENT
     files = glob.glob(join(dirpath, "*.hdf.met"))
 
     if test_set:
@@ -17,7 +17,7 @@ def load_caliop_data(dirpath, test_set=False):
     d = Dataset.objects.create(time_start=datetime(2008,1,1,0,0,0), time_end=datetime(2008,12,31,0,0,0),
                                platform_type='SA', source='NASA', public=True, name='CALIOP L2 Aerosol Profile V4',
                                project_URL='https://www-calipso.larc.nasa.gov/resources/calips', region='Global',
-                               spatial_extent=GeometryCollection(Polygon.from_bbox([-180, -90, 180, 90])),
+                               spatial_extent=GLOBAL_EXTENT.wkt,
                                owner=User.objects.filter(username='duncan').first(), campaign=c,
                                is_gridded=False)
 
@@ -71,6 +71,6 @@ def read_caliop_met_file(filepath):
     line = lat_lon_points_to_linestring(np.array(vals['longitude'], dtype=np.float), np.array(vals['latitude'], dtype=np.float))
 
     mf = MeasurementFile(time_start=vals['start_date'], time_end=vals['end_date'],
-                         spatial_extent=line.wkt, filename=filepath)
+                         spatial_extent=line.wkt, name=filepath)
 
     return mf

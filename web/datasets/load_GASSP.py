@@ -635,7 +635,7 @@ def load_gassp_data(test_set=False):
     for md in Measurement.objects.all():
         for f in islice(glob(md.files), 0, limit):
             # Skip broken or already processed files
-            if basename(f) in broken_files or len(MeasurementFile.objects.filter(filename=f).all()) > 0:
+            if basename(f) in broken_files or len(MeasurementFile.objects.filter(name=f).all()) > 0:
                 # Don't process this one
                 print("Skipping: {}".format(f))
                 continue
@@ -660,7 +660,7 @@ def load_gassp_data(test_set=False):
             # Add UTC timezone stamp
             t_start = timezone.make_aware(t_start, timezone.UTC())
             t_end = timezone.make_aware(t_end, timezone.UTC())
-            md.measurementfile_set.create(spatial_extent=geom, time_start=t_start, time_end=t_end, filename=f)
+            md.measurementfile_set.create(spatial_extent=geom, time_start=t_start, time_end=t_end, name=f)
 
 
 def clean_GASSP_datasets(buffer_width=2.0):
@@ -679,7 +679,7 @@ def clean_GASSP_datasets(buffer_width=2.0):
             print("Found {} geometries".format(len(geom)))
             if len(geom) > 0:
                 unified_extent = geom.simplify(0.2).buffer(buffer_width).unary_union.simplify(0.2)
-                d.spatial_extent = GeometryCollection(unified_extent)
+                d.spatial_extent = unified_extent
 
         if d.time_start is None:
             print("Setting time extent")

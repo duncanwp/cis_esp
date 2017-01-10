@@ -39,9 +39,9 @@ class Dataset(models.Model):
 
     # Human readable region description
     region = models.CharField(max_length=50, blank=True, null=True)
-    # This has to be a collection because there might be more than polygon (for wrapping the dateline) or many points
-    #  (for multi-station campaigns)
-    spatial_extent = models.GeometryCollectionField(null=True)
+
+    # Set Geography to 'true' to force PostGIS to treat this data on WGS84
+    spatial_extent = models.GeometryField(null=True, geography=True)
 
     # Temporal extent
     time_start = models.DateTimeField(null=True)
@@ -155,16 +155,17 @@ class MeasurementFile(models.Model):
     """
     measurements = models.ManyToManyField(Measurement)
 
-    #TODO: Note that there are specific fields for filenames - I might want to use one of those
-    filename = models.CharField(max_length=250)
+    name = models.CharField(max_length=250)
 
     # This is a generic Geometry field as it may be a line string (for aircraft), a point (for stations) or a Polygon
-    spatial_extent = models.GeometryField()
+    # Set Geography to 'true' to force PostGIS to treat this data on WGS84
+    spatial_extent = models.GeometryField(geography=True)
+
     time_start = models.DateTimeField()
     time_end = models.DateTimeField()
 
     def __str__(self):
-        return "{}".format(self.filename)
+        return "{}".format(self.name)
 
 
 class CIS_Job(models.Model):
