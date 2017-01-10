@@ -666,7 +666,7 @@ def load_gassp_data(test_set=False, clean=True, **kwargs):
         print("Cleaning data")
         clean_GASSP_datasets(**kwargs)
 
-clean_GASSP_datasets
+
 def clean_GASSP_datasets(buffer_width=2.0):
     """
     Add a dataset name and region to each Dataset if they aren't present
