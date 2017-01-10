@@ -20,4 +20,7 @@ VOLUME ["/cis-esp/media/", "/cis-esp/logs/"]
 # Port to expose
 EXPOSE 80
 
+# This is a workaround for a bug in docker-compose on Windows (https://github.com/docker/compose/issues/3065)
+RUN chmod +x /cis-esp/docker-entrypoint.sh
+
 ENTRYPOINT ["/cis-esp/docker-entrypoint.sh"]
