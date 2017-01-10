@@ -23,4 +23,4 @@ class MeasurementFileFilter(GeoFilterSet):
 
     class Meta:
         model = MeasurementFile
-        fields = ['filename', 'time_start', 'time_end']
+        fields = ['name', 'time_start', 'time_end']

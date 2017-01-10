@@ -3,7 +3,6 @@ Searilizers of all the model types for API usage
 """
 from rest_framework import serializers
 from .models import Campaign, Dataset, Measurement, MeasurementFile
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
 import json
 
 
@@ -45,10 +44,15 @@ class MeasurementSerializer(serializers.ModelSerializer):
         return obj.get_measurement_type_display()
 
 
-class MeasurementFileSerializer(GeoFeatureModelSerializer):
+class MeasurementFileSerializer(serializers.ModelSerializer):
+
+    spatial_extent = serializers.SerializerMethodField()
 
     class Meta:
         model = MeasurementFile
-        # Set the spatial extent as a geo field for serialization
-        geo_field = "spatial_extent"
-        fields = ('id', 'filename', 'spatial_extent', 'time_start', 'time_end')
+        fields = '__all__'
+
+    def get_spatial_extent(self, obj):
+        # Get the GeoJSON for this field directly
+        # Cast the resulting json to a json object so that the serializer doesn't escape it
+        return json.loads(obj.spatial_extent.json) if obj.spatial_extent is not None else None

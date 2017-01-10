@@ -107,6 +107,37 @@
                 });
             });
 
+            {#  Script to update the measurement-file box based on changes to the dataset box  #}
+            $(function () {
+                $('#id_datasets').change(function () {
+                    $.get("../api/measurement-files/", {format: "json", dataset: $(this).val()},
+                        function (json) {
+                            data_to_select(json, '#id_measurement_files');
+                        },
+                        "json");
+                });
+            });
+
+            {#  Script to update the map box based on changes to the measurement-file box  #}
+            $(function () {
+                $('#id_measurement_files').change(function () {
+                    // Clear the existing layers
+                    regionLayer.clearLayers();
+                    // Fetch the selected datasets
+                    var datasets = $('#id_measurement_files').find(':selected');
+                    if( datasets.length > 0) {
+                        // For each dataset fetch the data geometry (which is already GeoJSON) then add the layer
+                        datasets.each(function (i, selected) {
+                            $.get("../api/measurement-files/"+selected.value,
+                            function (json) {
+                                L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(regionLayer)
+                            },
+                            "json");
+                        });
+                    }
+                });
+            });
+
         </script>
     </form>
 
