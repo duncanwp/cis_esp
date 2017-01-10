@@ -13,16 +13,29 @@ def index(request, template_name='subset/index.html'):
 
         files = MeasurementFile.objects.values_list('filename', flat=True).\
             filter(measurements__dataset=form.cleaned_data['dataset'],
-                   time_end__gte=form.cleaned_data['start_date'],
-                   time_start__lte=form.cleaned_data['end_date'],
                    measurements__measurement_type=form.cleaned_data['measurement']).all()
 
-        # Do this separately since it's optional, and probably slow
-        if 'spatial_extent' in form.data:
-            files = files.filter(spatial_extent__intersects=form.data['spatial_extent'])
-        elif 'subset_dataset' in form.data:
-            files = files.filter(spatial_extent__intersects=Dataset.objects.values_list('spatial_extent', flat=True)
-                                 .filter(id=form.data['subset_dataset']).first())
+        spatial_extent = None
+
+        if form.cleaned_data['subset_dataset']:
+            subset_dataset = Dataset.objects.filter(id=form.data['subset_dataset']).first()
+
+            spatial_extent = subset_dataset.spatial_extent
+            start_date = subset_dataset.time_start
+            end_date = subset_dataset.time_end
+        else:
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+
+            if 'spatial_extent' in form.data:
+                spatial_extent = form.data['spatial_extent']
+            elif form.cleaned_data['subset_region']:
+                spatial_extent = None  #TODO
+
+        files = files.filter(time_end__gte=start_date, time_start__lte=end_date)
+
+        if spatial_extent:
+            files = files.filter(spatial_extent__intersects=spatial_extent)
 
         if files:
             variables = MeasurementVariable.objects.values_list('variable_name', flat=True).\

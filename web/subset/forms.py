@@ -15,4 +15,6 @@ class DataSelection(forms.Form):
 
     # The spatial extent gets added by the JS
 
-    subset_dataset = forms.ModelChoiceField(queryset=model.Dataset.objects.all())
+    subset_dataset = forms.ModelChoiceField(queryset=model.Dataset.objects.all(), required=False)
+
+    subset_region = forms.ChoiceField(choices=[(0, 'Africa'), (1, 'Europe'), (2, 'North America')], required=False)

@@ -181,47 +181,72 @@
         <script type="text/javascript">
 
             function subset_manually() {
+                // Show the date-selection and draw controls
                 $('#date_selection').collapse('show');
                 $('.leaflet-draw.leaflet-control').show();
 
+                // Clear the existing layers (any existing JSON layers can't be edited anyway)
+                editableLayers.clearLayers();
+
+                // Hide the other options
                 $('#subset_by_dataset').collapse('hide');
                 $('#subset_by_region').collapse('hide');
+
+                // Reset the other dropdowns
+                $('#id_subset_region').find('option').prop('selected', function() {
+                    return this.defaultSelected;
+                });
+                $('#id_subset_dataset').find('option').prop('selected', function() {
+                    return this.defaultSelected;
+                });
             }
 
             function subset_by_dataset() {
+                // Hide the date selection and draw control
                 $('#date_selection').collapse('hide');
                 $('.leaflet-draw.leaflet-control').hide();
+
+                // Clear the existing layers
                 editableLayers.clearLayers();
 
+                // Show the dataset selection box
                 $('#subset_by_dataset').collapse('show');
+                // Hide the region selection box
                 $('#subset_by_region').collapse('hide');
+
+                // Reset the region dropdown
+                $('#id_subset_region').find('option').prop('selected', function() {
+                    return this.defaultSelected;
+                });
             }
 
             function subset_by_region() {
+                // Show date selection
                 $('#date_selection').collapse('show');
+
+                // Hide the draw controls and clear the layers
                 $('.leaflet-draw.leaflet-control').hide();
                 editableLayers.clearLayers();
 
+                // Hide the dataset panel and show the region one
                 $('#subset_by_dataset').collapse('hide');
                 $('#subset_by_region').collapse('show');
+
+                // Reset the dataset dropdown
+                $('#id_subset_dataset').find('option').prop('selected', function() {
+                    return this.defaultSelected;
+                });
+
             }
 
             $("#form").submit(function (eventObj) {
                 var wkt;
+                // If the user chose the spatial extent manually then add the WKT to the form
                 if ($('#manually').hasClass('active')) {
                     $('<input />').attr('type', 'hidden')
                         .attr('name', "spatial_extent")
                         .attr('value', toWKT(editableLayers.getLayers()))
                         .appendTo('#form');
-                }
-                else if ($('#by_dataset').hasClass('active')) {
-                    $('<input />').attr('type', 'hidden')
-                        .attr('name', "subset_dataset")
-                        .attr('value', $('#id_subset_dataset').val())
-                        .appendTo('#form');
-                }
-                else if ($('#by_region').hasClass('active')) {
-
                 }
 
                 return true;
