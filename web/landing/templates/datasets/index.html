@@ -70,8 +70,11 @@
                 'weight': 1
             };
 
-            var regionLayer = new L.FeatureGroup();
-            mymap.addLayer(regionLayer);
+            var datasetLayer = new L.FeatureGroup();
+            mymap.addLayer(datasetLayer);
+
+            var fileLayer = new L.FeatureGroup();
+            mymap.addLayer(fileLayer);
 
         </script>
 
@@ -91,7 +94,7 @@
             $(function () {
                 $('#id_datasets').change(function () {
                     // Clear the existing layers
-                    regionLayer.clearLayers();
+                    datasetLayer.clearLayers();
                     // Fetch the selected datasets
                     var datasets = $('#id_datasets').find(':selected');
                     if( datasets.length > 0) {
@@ -99,7 +102,7 @@
                         datasets.each(function (i, selected) {
                             $.get("../api/datasets/"+selected.value,
                             function (json) {
-                                L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(regionLayer)
+                                L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(datasetLayer)
                             },
                             "json");
                         });
@@ -110,7 +113,8 @@
             {#  Script to update the measurement-file box based on changes to the dataset box  #}
             $(function () {
                 $('#id_datasets').change(function () {
-                    $.get("../api/measurement-files/", {format: "json", dataset: $(this).val()},
+                    // Just get the files for the first selected dataset (if multiple are selected)
+                    $.get("../api/measurement-files/", {format: "json", dataset: $(this).val()[0]},
                         function (json) {
                             data_to_select(json, '#id_measurement_files');
                         },
@@ -122,7 +126,7 @@
             $(function () {
                 $('#id_measurement_files').change(function () {
                     // Clear the existing layers
-                    regionLayer.clearLayers();
+                    fileLayer.clearLayers();
                     // Fetch the selected datasets
                     var datasets = $('#id_measurement_files').find(':selected');
                     if( datasets.length > 0) {
@@ -130,7 +134,7 @@
                         datasets.each(function (i, selected) {
                             $.get("../api/measurement-files/"+selected.value,
                             function (json) {
-                                L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(regionLayer)
+                                L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(fileLayer)
                             },
                             "json");
                         });
