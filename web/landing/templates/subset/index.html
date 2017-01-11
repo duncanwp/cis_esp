@@ -166,10 +166,6 @@
                 var type = e.layerType,
                     layer = e.layer;
 
-                if (type === 'marker') {
-                    layer.bindPopup('A popup!');
-                }
-
                 {# Remove any existing layers - we're only allowed one! #}
                 editableLayers.clearLayers();
 
