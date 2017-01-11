@@ -11,7 +11,7 @@ def index(request, template_name='subset/index.html'):
     if form.is_valid():
         # process the data in form.cleaned_data as required
 
-        files = MeasurementFile.objects.values_list('filename', flat=True).\
+        files = MeasurementFile.objects.values_list('name', flat=True).\
             filter(measurements__dataset=form.cleaned_data['dataset'],
                    measurements__measurement_type=form.cleaned_data['measurement']).all()
 
