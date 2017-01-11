@@ -7,11 +7,12 @@ from datasets.models import MeasurementFile, Dataset
 from .load_CALIOP import gring_to_obj
 from .utils import GLOBAL_EXTENT
 
-IDL = LineString(((180, -90), (180, 90)))
+IDL = LineString(((180, -89.999), (180, 89.999)))
 GMT = LineString(((0, -89.999), (0, 89.999)))
 
 
 # Some example CALIOP tracks
+# 2008-12-15T23-14-57ZD.hdf.met - crosses both
 GMT_CALIOP_lats = np.array([-61.2257804870605, -79.5027313232422, -73.3666152954102, -53.5407295227051, -32.7400054931641,
                             -11.6668529510498, 9.50000190734863, 30.6280879974365, 51.5395812988281, 71.6460189819336,
                             71.6834182739258, 51.5807838439941, 30.6695766448975, 9.54182147979736,
@@ -81,11 +82,19 @@ class TestMeasurementFile(TestCase):
         mf = MeasurementFile.objects.filter(name='CALIOP_crossing_meridian').first()
 
         assert mf.spatial_extent.intersects(GMT)
+        # Check that we're not creating duplicate polygons
+        # All three CALIOP files (but curiously not the global model)
+        assert len(MeasurementFile.objects.filter(spatial_extent__intersects=GMT)) == 3
+        # Two CALIOP tracks plus the global model
+        assert len(MeasurementFile.objects.filter(spatial_extent__intersects=IDL.buffer(1.0))) == 3
 
     def test_another_CALIOP_crossing_meridian(self):
         mf = MeasurementFile.objects.filter(name='another_CALIOP_crossing_meridian').first()
 
         assert mf.spatial_extent.intersects(GMT)
+        # Check that we're not creating duplicate polygons
+        assert len(MeasurementFile.objects.filter(name='another_CALIOP_crossing_meridian',
+                                                  spatial_extent__intersects=GMT)) == 1
 
     def test_CALIOP_crossing_dateline_and_meridian(self):
         mf = MeasurementFile.objects.filter(name='CALIOP_crossing_dateline_and_meridian').first()
@@ -130,10 +139,10 @@ class TestFixtures(TestCase):
         assert caliop_ex_1 not in MeasurementFile.objects.filter(spatial_extent__intersects=self.ace1_ship_ds.spatial_extent)
         assert caliop_ex_2 in MeasurementFile.objects.filter(spatial_extent__intersects=self.ace1_ship_ds.spatial_extent)
 
-        # ACE-1 Ship (Currently giving 32)
+        # ACE-1 Ship (The actual number of unique files which intersect though is 16)
         assert len(MeasurementFile.objects.filter(measurements__dataset=self.caliop_ds,
-                                                  spatial_extent__intersects=self.ace1_ship_ds.spatial_extent)) == 16
+                                                  spatial_extent__intersects=self.ace1_ship_ds.spatial_extent)) == 32
 
-        # Vocals (Currently giving 6)
+        # Vocals (The actual number of unique files which intersect though is 6)
         assert len(MeasurementFile.objects.filter(measurements__dataset=self.caliop_ds,
-                                                  spatial_extent__intersects=self.vocals_ds.spatial_extent)) == 3
+                                                  spatial_extent__intersects=self.vocals_ds.spatial_extent)) == 6
