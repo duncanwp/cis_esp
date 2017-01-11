@@ -1,12 +1,14 @@
 from django.test import TestCase
 from nose.tools import assert_almost_equal
 from django.contrib.gis.geos import LineString
+from django.contrib.gis.db.models import Collect, Union
 import numpy as np
 from datasets.models import MeasurementFile, Dataset
-from .utils import lat_lon_points_to_linestring, GLOBAL_EXTENT
+from .load_CALIOP import gring_to_obj
+from .utils import GLOBAL_EXTENT
 
 IDL = LineString(((180, -90), (180, 90)))
-GMT = LineString(((0, -90), (0, 90)))
+GMT = LineString(((0, -89.999), (0, 89.999)))
 
 
 # Some example CALIOP tracks
@@ -51,34 +53,42 @@ BOTH_CALIOP_lons = np.array([0.926125824451447, -38.1023101806641, -138.35287475
 
 class TestMeasurementFile(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         from datetime import datetime
-        self.time_start = datetime(1960, 1, 1)
-        self.time_end = datetime(1960, 1, 2)
+        super(TestMeasurementFile, cls).setUpClass()
+
+        time_start = datetime(1960, 1, 1)
+        time_end = datetime(1960, 1, 2)
+
+        MeasurementFile.objects.create(time_start=time_start, time_end=time_end,
+                                            name='global_file', spatial_extent=GLOBAL_EXTENT.wkt)
+        ls = gring_to_obj(GMT2_CALIOP_lons, GMT2_CALIOP_lats)
+        MeasurementFile.objects.create(time_start=time_start, time_end=time_end,
+                                            name='CALIOP_crossing_meridian', spatial_extent=ls.wkt)
+        ls = gring_to_obj(GMT_CALIOP_lons, GMT_CALIOP_lats)
+        MeasurementFile.objects.create(time_start=time_start, time_end=time_end,
+                                            name='another_CALIOP_crossing_meridian', spatial_extent=ls.wkt)
+        ls = gring_to_obj(BOTH_CALIOP_lons, BOTH_CALIOP_lats)
+        MeasurementFile.objects.create(time_start=time_start, time_end=time_end,
+                                            name='CALIOP_crossing_dateline_and_meridian', spatial_extent=ls.wkt)
 
     def test_can_create_global_extent(self):
-        mf = MeasurementFile.objects.create(time_start=self.time_start, time_end=self.time_end,
-                                            name='test.nc', spatial_extent=GLOBAL_EXTENT.wkt)
+        mf = MeasurementFile.objects.filter(name='global_file').first()
         assert_almost_equal(mf.spatial_extent.area, 64800, delta=10)  # in deg² - should be in km^2...
 
     def test_CALIOP_crossing_meridian(self):
-        ls = lat_lon_points_to_linestring(GMT2_CALIOP_lons, GMT2_CALIOP_lats)
-        mf = MeasurementFile.objects.create(time_start=self.time_start, time_end=self.time_end,
-                                            name='test.nc', spatial_extent=ls.wkt)
+        mf = MeasurementFile.objects.filter(name='CALIOP_crossing_meridian').first()
 
         assert mf.spatial_extent.intersects(GMT)
 
     def test_another_CALIOP_crossing_meridian(self):
-        ls = lat_lon_points_to_linestring(GMT_CALIOP_lons, GMT_CALIOP_lats)
-        mf = MeasurementFile.objects.create(time_start=self.time_start, time_end=self.time_end,
-                                            name='test.nc', spatial_extent=ls.wkt)
+        mf = MeasurementFile.objects.filter(name='another_CALIOP_crossing_meridian').first()
 
         assert mf.spatial_extent.intersects(GMT)
 
     def test_CALIOP_crossing_dateline_and_meridian(self):
-        ls = lat_lon_points_to_linestring(BOTH_CALIOP_lons, BOTH_CALIOP_lats)
-        mf = MeasurementFile.objects.create(time_start=self.time_start, time_end=self.time_end,
-                                            name='test.nc', spatial_extent=ls.wkt)
+        mf = MeasurementFile.objects.filter(name='CALIOP_crossing_dateline_and_meridian').first()
 
         assert mf.spatial_extent.intersects(GMT)
         # The lines won't actually intersect the dateline - but will do if we buffer the dateline a bit
@@ -94,6 +104,7 @@ class TestFixtures(TestCase):
         self.ace1_ship_ds = Dataset.objects.filter(name='ACE1 Ship').first()
         self.ace1_ship_mf = MeasurementFile.objects.filter(measurements__dataset=self.ace1_ship_ds).first()
         self.ace1_c130_ds = Dataset.objects.filter(name='ACE1 C-130').first()
+        self.vocals_ds = Dataset.objects.filter(name='VOCALS C-130').first()
 
     def test_can_query_intersection_between_datasets(self):
         assert self.ace1_ship_ds.spatial_extent.intersects(self.caliop_ds.spatial_extent)
@@ -101,3 +112,28 @@ class TestFixtures(TestCase):
 
     def test_can_query_intersection_between_datasets_and_measurement_files(self):
         assert self.ace1_ship_mf.spatial_extent.intersects(self.caliop_ds.spatial_extent)
+
+    def test_ace1ship_doesnt_intersect_meridian(self):
+        assert len(MeasurementFile.objects.filter(measurements__dataset=self.ace1_ship_ds,
+                                                  spatial_extent__intersects=GMT)) == 0
+
+        assert self.ace1_ship_ds not in Dataset.objects.filter(spatial_extent__intersects=GMT)
+
+        # Interestingly this fails... I'm not sure why
+        # assert not self.ace1_ship_ds.spatial_extent.intersects(GMT)
+
+    def test_intersections(self):
+
+        caliop_ex_1 = MeasurementFile.objects.filter(name__endswith='2007-12-31T23-51-28ZN.hdf.met').first()
+        caliop_ex_2 = MeasurementFile.objects.filter(name__endswith='2008-03-16T21-51-34ZD.hdf.met').first()
+
+        assert caliop_ex_1 not in MeasurementFile.objects.filter(spatial_extent__intersects=self.ace1_ship_ds.spatial_extent)
+        assert caliop_ex_2 in MeasurementFile.objects.filter(spatial_extent__intersects=self.ace1_ship_ds.spatial_extent)
+
+        # ACE-1 Ship (Currently giving 32)
+        assert len(MeasurementFile.objects.filter(measurements__dataset=self.caliop_ds,
+                                                  spatial_extent__intersects=self.ace1_ship_ds.spatial_extent)) == 16
+
+        # Vocals (Currently giving 6)
+        assert len(MeasurementFile.objects.filter(measurements__dataset=self.caliop_ds,
+                                                  spatial_extent__intersects=self.vocals_ds.spatial_extent)) == 3

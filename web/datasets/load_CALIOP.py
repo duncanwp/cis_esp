@@ -2,6 +2,15 @@ from datasets.models import Dataset, MeasurementFile, Measurement, Campaign
 from datetime import datetime
 
 
+def gring_to_obj(lons, lats):
+    from django.contrib.gis.geos import LinearRing
+    from .utils import lat_lon_points_to_linestring
+
+    # line = LinearRing(list(zip(lons, lats)))
+    line = lat_lon_points_to_linestring(lons, lats)
+    return line
+
+
 def load_caliop_data(dirpath, test_set=False):
     import glob
     from os.path import join
@@ -37,9 +46,8 @@ def load_caliop_data(dirpath, test_set=False):
 
 
 def read_caliop_met_file(filepath):
-    from .utils import lat_lon_points_to_linestring
-    import numpy as np
     import dateutil.parser
+    import numpy as np
     vals = {}
     _in = ''
 
@@ -68,7 +76,7 @@ def read_caliop_met_file(filepath):
                     vals[_in] = val.strip('(').strip(')').split(',')
 
     # Use this helper method to convert to linestring taking into account dateline crossing
-    line = lat_lon_points_to_linestring(np.array(vals['longitude'], dtype=np.float), np.array(vals['latitude'], dtype=np.float))
+    line = gring_to_obj(np.array(vals['longitude'], dtype=np.float), np.array(vals['latitude'], dtype=np.float))
 
     mf = MeasurementFile(time_start=vals['start_date'], time_end=vals['end_date'],
                          spatial_extent=line.wkt, name=filepath)
