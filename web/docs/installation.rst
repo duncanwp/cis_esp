@@ -12,11 +12,7 @@ followed by::
 
   docker-compose up -d
 
-You can add test data by doing::
-
-  docker exec -it <container> python /cis-esp/manage.py loaddata /cis-esp/test_fixtures.json
-
-Or add a larger test set by copying the data in first::
+Test data will automatically be loaded, but a larger test set by copying the data in first::
 
   docker cp large_test_fixtures.json <container>:large_test_fixtures.json
 
