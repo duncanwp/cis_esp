@@ -1,11 +1,15 @@
-FROM continuumio/miniconda3
+FROM python:2.7
 MAINTAINER Duncan Watson-Parris <duncan.watson-parris@physics.ox.ac.uk>
 
 WORKDIR /cis-esp
 
-# Add then install the conda requirements - this can then be cached
-ADD ./conda-requirements.txt /cis-esp/conda-requirements.txt
-RUN conda install -c conda-forge --file conda-requirements.txt
+# Install the ARC-CE client tools and geo C libraries
+RUN apt-get update && apt-get install -y \
+    nordugrid-arc-python \
+    globus-gsi-cert-utils-progs \
+    binutils \
+    libproj-dev \
+    gdal-bin
 
 # Add then install the pip requirements - this can then be cached
 ADD ./requirements.txt /cis-esp/requirements.txt

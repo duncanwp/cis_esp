@@ -18,7 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env_file = os.environ.get('PROJECT_ENV_FILE', BASE_DIR + "/../dev.env")
 try:
     with open(env_file) as f:
-        proj_envs = dict(line.strip().split('=', maxsplit=1) for line in f)
+        proj_envs = dict(line.strip().split('=', 1) for line in f)
         os.environ.update(proj_envs)
 except IOError:
     print("No env file found at: " + env_file)

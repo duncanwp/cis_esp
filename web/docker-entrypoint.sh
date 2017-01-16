@@ -1,6 +1,12 @@
 #!/bin/bash
 # From http://michal.karzynski.pl/blog/2015/04/19/packaging-django-applications-as-docker-container-images/
 
+# Add the ARC-CE python client to the python path.
+# TODO This works for Docker, but not PyCharm - I need to add it to my Docker interpreter path somehow
+export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
+#ln -s /usr/lib/python2.7/dist-packages/arc /usr/local/lib/python2.7/site-packages/arc
+#ln -s /usr/lib/python2.7/dist-packages/_arc.so /usr/local/lib/python2.7/site-packages/_arc.so
+
 # Wait for the DB to be up...
 sleep 10
 
