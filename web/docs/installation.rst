@@ -16,6 +16,11 @@ Test data will automatically be loaded, but a larger test set by copying the dat
 
   docker cp large_test_fixtures.json <container>:large_test_fixtures.json
 
+and then adding them to the database::
+
+  docker exec -it <container> python /cis-esp/manage.py loaddata /cis-esp/test_fixtures.json
+
+
 To wipe the database type::
 
   docker volume rm pgdata
