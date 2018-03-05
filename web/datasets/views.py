@@ -18,7 +18,6 @@ class DatasetViewSet(viewsets.ReadOnlyModelViewSet):
     """
     This viewset automatically provides `list` and `detail` actions.
     """
-    filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DatasetFilter
 
     queryset = Dataset.objects.all()
@@ -37,7 +36,6 @@ class MeasurementFileViewSet(viewsets.ReadOnlyModelViewSet):
     """
     This viewset automatically provides `list` and `detail` actions.
     """
-    filter_backends = (filters.DjangoFilterBackend,)
     filter_class = MeasurementFileFilter
 
     queryset = MeasurementFile.objects.all()
