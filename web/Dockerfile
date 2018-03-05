@@ -5,6 +5,8 @@ WORKDIR /cis-esp
 
 # Add then install the conda requirements - this can then be cached
 ADD ./conda-requirements.txt /cis-esp/conda-requirements.txt
+# Ensure we're using the latest conda
+RUN conda update -n base conda
 RUN conda install -c conda-forge --file conda-requirements.txt
 
 # Add then install the pip requirements - this can then be cached
