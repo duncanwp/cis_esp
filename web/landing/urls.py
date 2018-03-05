@@ -23,5 +23,5 @@ urlpatterns = [
     url(r'^collocate/', collocate.index, name='index'),
     url(r'^aggregate/', aggregate.index, name='index'),
     url(r'^jobs/', jobs.index, name='index'),
-    url(r'^api/', include(router.urls, namespace='api')),
+    url(r'^api/', include(router.urls)),
 ]
