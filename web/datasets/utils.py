@@ -79,7 +79,7 @@ def idl_resolve(geom, buffer_width=0.0000001):
     return geom
 
 
-def lat_lon_points_to_polygon(lons, lats, coordinate_system=None):
+def lat_lon_points_to_polygon(lons, lats):
     """
     Routine for converting a list of lat lons to an outline polygon taking into account the dateline
 
@@ -89,23 +89,14 @@ def lat_lon_points_to_polygon(lons, lats, coordinate_system=None):
     :param numpy.ndarray lons: Array of longitude points (not necasarily 1-D)
     :return shapely.geometry.Polygon: The convex hull of the points
     """
-    import cartopy.crs as ccrs
+    import numpy as np
 
-    poly = sgeom.MultiPoint(list(zip(lons.flat, lats.flat)))
-    # If we have satellite data we want a polygon - but that will have issues crossing the dateline
-    #  so shift it onto a 0-360 longitude range before making the polygon
-    shifted_poly = shift(poly)
-    if shifted_poly.convex_hull.intersects(IDL):
-        poly = shifted_poly.convex_hull
-    else:
-        poly = poly.convex_hull
+    if all(np.abs(lons[0::3] - lons[1:2]) > 180):
+        lons[0::3] = np.maximum(lons[0::3], lons[0::3]+360.0)
 
-    pc = ccrs.PlateCarree()
+    poly = sgeom.MultiPoint(list(zip(lons, lats)))
 
-    coordinate_system = coordinate_system or pc
-
-    # Project our geometry onto a fixed -180 to 180 projection
-    return pc.project_geometry(poly, coordinate_system)
+    return poly.convex_hull
 
 
 def lat_lon_points_to_linestring(lons, lats):

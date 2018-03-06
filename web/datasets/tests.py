@@ -1,8 +1,6 @@
 import unittest
 from nose.tools import assert_almost_equal, assert_greater, assert_equal
 from datasets.utils import cis_object_to_shp
-from cis.test.integration_test_data import cis_test_files
-from cis import read_data
 import shapely.geometry as sgeom
 import numpy as np
 
@@ -49,18 +47,21 @@ BOTH_CALIOP_lons = np.array([0.926125824451447, -38.1023101806641, -138.35287475
 class TestCISLoad(unittest.TestCase):
 
     def test_get_global_poly_for_global_model(self):
+        from cis import read_data
         from cis.test.integration_test_data import valid_hadgem_filename, valid_hadgem_variable
         # This is a 0-360 dataset
         shp = cis_object_to_shp(read_data(valid_hadgem_filename, valid_hadgem_variable))
         assert_almost_equal(shp.area, 64800, 0)  # in deg²
 
     def test_get_global_poly_for_specified_global_model(self):
+        from cis import read_data
         from cis.test.integration_test_data import valid_hadgem_filename, valid_hadgem_variable
         # This is a 0-360 dataset
         shp = cis_object_to_shp(read_data(valid_hadgem_filename, valid_hadgem_variable), platform_type='Global Model')
         assert_almost_equal(shp.area, 64800, 0)  # in deg²
 
     def test_get_point_for_station(self):
+        from cis import read_data
         from cis.test.integration_test_data import valid_aeronet_filename, valid_aeronet_variable
         from shapely.wkt import loads
         shp = cis_object_to_shp(read_data(valid_aeronet_filename, valid_aeronet_variable), platform_type='Ground station')
@@ -69,6 +70,9 @@ class TestCISLoad(unittest.TestCase):
 
     #TODO: Add some tests to check these are actually in the right place
     def test_get_points_for_ship(self):
+        from cis.test.integration_test_data import cis_test_files
+        from cis import read_data
+
         fileset = 'GASSP_ship'
         shp = cis_object_to_shp(read_data(cis_test_files[fileset].master_filename,
                                           cis_test_files[fileset].data_variable_name), platform_type='Ship')
@@ -76,12 +80,16 @@ class TestCISLoad(unittest.TestCase):
         assert isinstance(shp, sgeom.LineString)
 
     def test_get_points_for_aircraft(self):
+        from cis.test.integration_test_data import cis_test_files
+        from cis import read_data
+
         fileset = 'GASSP_aeroplane'
         shp = cis_object_to_shp(read_data(cis_test_files[fileset].master_filename,
                                           cis_test_files[fileset].data_variable_name), platform_type='Aircraft')
         assert isinstance(shp, sgeom.LineString)
 
     def test_get_points_for_ungridded_satellite(self):
+        from cis import read_data
         from .utils import IDL
         from cis.test.integration_test_data import valid_modis_l2_filename
         shp = cis_object_to_shp(read_data(valid_modis_l2_filename,
@@ -93,6 +101,7 @@ class TestCISLoad(unittest.TestCase):
         assert IDL.buffer(1).intersects(shp)
 
     def test_get_polygon_for_gridded_satellite(self):
+        from cis import read_data
         from cis.test.integration_test_data import valid_modis_l3_filename, valid_modis_l3_variable
         shp = cis_object_to_shp(read_data(valid_modis_l3_filename,
                                           valid_modis_l3_variable), platform_type='Satellite')
@@ -101,6 +110,8 @@ class TestCISLoad(unittest.TestCase):
         assert_almost_equal(shp.area, 64440, 0)  # in deg²
 
     def test_higher_tolerance_gives_fewer_points(self):
+        from cis.test.integration_test_data import cis_test_files
+        from cis import read_data
         fileset = 'GASSP_ship'
 
         ship_data = read_data(cis_test_files[fileset].master_filename,
@@ -117,6 +128,9 @@ class TestCISLoad(unittest.TestCase):
 
         # One degree
         assert_equal(len(cis_object_to_shp(ship_data, platform_type='Ship', tolerance=1.0).xy[0]), 883)
+
+
+class TestShapesOnDateLine(unittest.TestCase):
 
     def test_CALIOP_crossing_meridian(self):
         from .utils import lat_lon_points_to_linestring, GMT
@@ -137,6 +151,25 @@ class TestCISLoad(unittest.TestCase):
         assert GMT.intersects(ls)
         # The lines won't actually intersect the dateline - but will do if we buffer the dateline a bit
         assert IDL.buffer(1).intersects(ls)
+
+    def test_MODIS_crossing_dateline(self):
+        from .utils import lat_lon_points_to_polygon, IDL
+
+        lons = np.asarray([-164.596461203536, 174.70606997689, 170.372364741051, -167.983254218512])
+        lats = np.asarray([0.753418337158944, -2.23507041192917, 15.611173217228, 18.7996382432357])
+
+        p = lat_lon_points_to_polygon(lons, lats)
+
+        assert IDL.intersects(p)
+
+    def test_MODIS_crossing_meridian(self):
+        from .utils import lat_lon_points_to_polygon, GMT
+        lons = np.asarray([-12.3278115928976,12.8047445819487,7.02768311917752,-14.7380033959794])
+        lats = np.asarray([35.8378080315073, 32.1976071532573, 14.6240677690972, 17.6249061076722])
+
+        p = lat_lon_points_to_polygon(lons, lats)
+
+        assert GMT.intersects(p)
 
 
 if __name__ == '__main__':
