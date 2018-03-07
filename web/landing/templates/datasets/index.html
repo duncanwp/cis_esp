@@ -11,6 +11,7 @@
     {#  Bring in necassary js  #}
     <script src="{% static 'js/main.js' %}"></script>
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -18,41 +19,19 @@
     {%  include "common/includes/leaflet_includes.html" %}
 
 {# The order of these imports really matters - see http://leaflet.github.io/Leaflet.draw/docs/examples/full.html for an example #}
-
-    <h4>Browse data</h4>
-
+    <center>
+    <h1>Explore data</h1>
+    </center>
     {% load i18n widget_tweaks %}
 
     <form class="form-horizontal" role="form" action="." method="post">
         {% csrf_token %}
-        {% for field in form %}
-            {% if field.errors %}
-                <div class="form-group has-error">
-                    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
-                    <div class="col-sm-10">
-                        {{ field|attr:"class:form-control" }}
-                        <span class="help-block">
-                            {% for error in  field.errors %}{{ error }}{% endfor %}
-                        </span>
-                    </div>
-                </div>
-            {% else %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
-                    <div class="col-sm-10">
-                        {{ field|attr:"class:form-control" }}
-                        {% if field.help_text %}
-                            <p class="help-block"><small>{{ field.help_text }}</small></p>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
-        {% endfor %}
 
-        <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10" id="mapid"></div>
-        </div>
-
+            <div class="col-sm-12">
+              <div id="mapid" ></div>
+               <!-- ADD THE responsive-plot CLASS -->
+              <div id="plotid" style="max-height:300px;max-width:1025px" class="responsive-plot"></div>
+            </div>
 
         <script type="text/javascript">
             var mymap = L.map('mapid').setView([20, 0], 1.5);
@@ -78,49 +57,85 @@
 
         </script>
 
+        <script>
+            {# Plotly js           #}
+            var endpoint = "../api/measurement-files"
+            var articleData = articleLabels = []
+
+            $.ajax({
+                method: "GET",
+                url: endpoint,
+                success: function(data){
+                    articleLabels = data.article_labels
+                    articleData = data.article_data
+                    articleChart()
+                    transcriptChart()
+                // console.log(data)
+                },
+                error: function(error_data){
+                    console.log("error")
+                    console.log(error_data)
+                },
+            })
+
+            function articleChart(){
+                var data = [{
+                    x: articleData,
+                    y: articleLabels,
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {
+                        color: '#23b7e5',
+                    },
+                }];
+                var layout = {
+                      xaxis: {
+                        title: 'Time'
+                      },
+                      yaxis: {
+                        title: 'AOD'
+                      },
+                        margin: {
+                        l: 50,
+                        r: 50,
+                        b: 30,
+                        t: 5,
+                        pad: 4
+                      },
+                };
+
+                Plotly.newPlot('plotid', data, layout);
+            }
+        </script>
+
+        <script>
+            // MAKE THE PLOTS RESPONSIVE
+            (function() {
+              var d3 = Plotly.d3;
+              var WIDTH_IN_PERCENT_OF_PARENT = 100,
+                  HEIGHT_IN_PERCENT_OF_PARENT = 90;
+
+              var gd3 = d3.selectAll(".responsive-plot")
+                  .style({
+                    width: WIDTH_IN_PERCENT_OF_PARENT + '%',
+                    'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
+
+                    height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh',
+                    'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
+                  });
+
+              var nodes_to_resize = gd3[0]; //not sure why but the goods are within a nested array
+              window.onresize = function() {
+                for (var i = 0; i < nodes_to_resize.length; i++) {
+                  Plotly.Plots.resize(nodes_to_resize[i]);
+                }
+              };
+
+            })();
+        </script>
+
+
         <script type="text/javascript">
-            {#  Script to update the dataset box based on changes to the measurement box  #}
-            $(function () {
-                $('#id_measurement').change(function () {
-                    $.get("../api/datasets/", {format: "json", measurement_type: $(this).val()},
-                        function (json) {
-                            data_to_select(json, '#id_datasets');
-                        },
-                        "json");
-                });
-            });
-
-            {#  Script to update the map box based on changes to the dataset box  #}
-            $(function () {
-                $('#id_datasets').change(function () {
-                    // Clear the existing layers
-                    datasetLayer.clearLayers();
-                    // Fetch the selected datasets
-                    var datasets = $('#id_datasets').find(':selected');
-                    if( datasets.length > 0) {
-                        // For each dataset fetch the data geometry (which is already GeoJSON) then add the layer
-                        datasets.each(function (i, selected) {
-                            $.get("../api/datasets/"+selected.value,
-                            function (json) {
-                                L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(datasetLayer)
-                            },
-                            "json");
-                        });
-                    }
-                });
-            });
-
-            {#  Script to update the measurement-file box based on changes to the dataset box  #}
-            $(function () {
-                $('#id_datasets').change(function () {
-                    // Just get the files for the first selected dataset (if multiple are selected)
-                    $.get("../api/measurement-files/", {format: "json", dataset: $(this).val()[0]},
-                        function (json) {
-                            data_to_select(json, '#id_measurement_files');
-                        },
-                        "json");
-                });
-            });
 
             {#  Script to update the map box based on changes to the measurement-file box  #}
             $(function () {
