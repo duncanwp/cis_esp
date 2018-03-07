@@ -8,34 +8,37 @@
         <div class="alert alert-{{ message.tags }}">{{ message }}</div>
     {% endfor %}
 
-    <div class="row">
-        <br>
-        <center>
-            <h1>CIS Evaluation and Synthesis Platform (ESP)</h1>
-        </center>
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        <h1>EVADE</h1>
+        <p>This demo site explores the use of the Community Intercomparison Suite (CIS) hosted on JASMIN to provide bespoke air-quality indicators for Official Development Assistance (ODA) countries from large earth observation datasets.</p>
+        <p><a class="btn btn-primary btn-lg" href="/about" role="button">Learn more &raquo;</a></p>
+      </div>
     </div>
-    <hr>
 
-    <div class="row">
-        <div class="col-sm-4">
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-4">
             <img src="{% static 'landing/img/step1.png' %}" class="img-responsive" alt="Step 1">
-            <h2>
-                <small>Evaluate</small>
-            </h2>
+          <h2>Explore</h2>
+          <p>Explore original and synthesized datasets of air quality proxies around the world. </p>
+          <p><a class="btn btn-default" href="/datasets" role="button">View details &raquo;</a></p>
         </div>
-        <div class="col-sm-4">
+        <div class="col-md-4">
             <img src="{% static 'landing/img/step2.png' %}" class="img-responsive" alt="Step 2">
-            <h2>
-                <small>Synthesize</small>
-            </h2>
+          <h2>Synthesize</h2>
+          <p>Synthesize new time-series datasets over arbitrary cities and regions from global satelite data products. </p>
+          <p><a class="btn btn-default" href="/synthesize" role="button">View details &raquo;</a></p>
+       </div>
+        <div class="col-md-4">
+             <img src="{% static 'landing/img/step3.png' %}" class="img-responsive" alt="Step 3">
+          <h2>Analyse</h2>
+          <p>Download time-series data directly to allow more detailed off-line analysis.</p>
+          <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
         </div>
-        <div class="col-sm-4">
-            <img src="{% static 'landing/img/step3.png' %}" class="img-responsive" alt="Step 3">
-            <h2>
-                <small>Analyse</small>
-            </h2>
-        </div>
+      </div>
     </div>
-    {% include 'landing/includes/html_snippet.html' %}
 
 {% endblock %}

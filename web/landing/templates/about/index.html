@@ -1,0 +1,39 @@
+{% extends "landing/header.html" %}
+{% load staticfiles%}
+
+{% block head %}
+    {#    Bring in the media necassary for the form #}
+    {{ form.media }}
+    {#  Bring in leaflet  #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
+    <link rel="stylesheet" href="{% static 'leaflet/leaflet.draw/leaflet.draw.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+
+      <div class="starter-template">
+
+    <h1>About EVADE</h1>
+
+    <p>The access to EnVironmental Analytics for Developing countriEs (EVADE) project builds on STFC and NERC investments into the Community Intercomparison Suite to develop a demonstration of an easy-to-use web portal providing access to environmental analytics of "big" Earth System data to users and scientists in developing countries (maximising co-benefits for the UK scientific and commercial applications).</p>
+
+          <p>This site is intended to demonstrate these concepts and explore the technical challenges in realising this ambition.</p>
+
+    <h2>Funding</h2>
+
+    <p>Funding for this initial demonstration phase was provided by STFC (ST/P003206/1). CIS is developed as open-source software and deployed for community use on the JASMIN platform provided by UK NERC, the UK Space Agency and the Science and Technology Facilities Council.</p>
+
+    <h2>Copyright and license</h2>
+    <p>© University of Oxford 2018</p>
+
+    <p>CIS-ESP (and CIS) are free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. CIS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details: <a href="http://www.gnu.org/licenses">http://www.gnu.org/licenses</a>.</p>
+
+
+      </div>
+
+    </div><!-- /.container -->
+
+
+{% endblock %}

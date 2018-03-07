@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'landing',
     'datasets',
-    'subset',
+    'synthesize',
     'widget_tweaks'
 ]
 

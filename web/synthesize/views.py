@@ -4,7 +4,7 @@ from .forms import DataSelection
 from django.contrib import messages
 
 
-def index(request, template_name='subset/index.html'):
+def index(request, template_name='synthesize/index.html'):
 
     form = DataSelection(request.POST or None)
 

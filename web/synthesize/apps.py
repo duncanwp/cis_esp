@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class AggregateConfig(AppConfig):
-    name = 'aggregate'
+    name = 'synthesize'
