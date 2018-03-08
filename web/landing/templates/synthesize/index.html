@@ -21,81 +21,37 @@
     <script src="{% static 'js/wicket-leaflet.js' %}"></script>
     {# The order of these imports really matters - see http://leaflet.github.io/Leaflet.draw/docs/examples/full.html for an example #}
 
-    <h4>Select the data to subset</h4>
-
-
     {% load i18n widget_tweaks %}
+
+    <div class="col-sm-offset-1">
+        <h1 class="page-header">Synthesize</h1>
+    </div>
 
     <form class="form-horizontal" role="form" action="." method="post" id="form">
         {% csrf_token %}
 
         <div class="form-group">
-            <label class="col-sm-2 control-label" for="id_measuremet">Measurement</label>
+            <div class="btn-group col-sm-offset-2 " data-toggle="buttons">
+                <label class="btn btn-primary active" onclick="subset_by_region();" id="by_region">
+                    <input type="radio" name="subset_options"> By region
+                </label>
+                <label class="btn btn-primary" onclick="subset_manually();" id="manually" >
+                    <input type="radio" name="subset_options" checked> Manually
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="id_measurement">Measurement</label>
             <div class="col-sm-10">
                 {{ form.measurement|attr:"class:form-control" }}
             </div>
         </div>
 
-        <div class="form-group">
-            <label class="col-sm-2 control-label" for="id_dataset">Dataset</label>
-            <div class="col-sm-10">
-                {{ form.dataset|attr:"class:form-control" }}
-            </div>
-        </div>
-
-        <hr>
-
-        <div class="form-group">
-            <div class="btn-group col-sm-offset-2 " data-toggle="buttons">
-                <label class="btn btn-primary active" onclick="subset_manually();" id="manually" >
-                    <input type="radio" name="subset_options" checked> Manually
-                </label>
-                <label class="btn btn-primary" onclick="subset_by_dataset();" id="by_dataset">
-                    <input type="radio" name="subset_options"> By dataset
-                </label>
-                <label class="btn btn-primary" onclick="subset_by_region();" id="by_region">
-                    <input type="radio" name="subset_options"> By region
-                </label>
-            </div>
-        </div>
-
-        <div class="collapse in" id="date_selection">
-            <div class="form-group">
-                <label class="col-sm-2 control-label" for="id_start_date">Start Date</label>
-                <div class="col-sm-10">
-                    {{ form.start_date|attr:"class:form-control" }}
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-sm-2 control-label" for="id_end_date">End Date</label>
-                <div class="col-sm-10">
-                    {{ form.end_date|attr:"class:form-control" }}
-                </div>
-            </div>
-        </div>
-
-        <div class="collapse" id="subset_by_dataset">
-
-            <div class="form-group">
-                <label class="col-sm-2 control-label" for="id_subset_dataset">Dataset</label>
-                <div class="col-sm-10">
-                    <div class="alert alert-warning" role="alert">
-                        Note that this is <em>not</em> a collocation. The input data is
-                        simply subsetted to the rough spatial and temporal extent of the selected dataset.
-                    </div>
-                    {{ form.subset_dataset|attr:"class:form-control" }}
-                </div>
-            </div>
-        </div>
-
-        <div class="collapse" id="subset_by_region">
+        <div id="subset_by_region">
             <div class="form-group">
                 <label class="col-sm-2 control-label" for="id_subset_region">Region</label>
                 <div class="col-sm-10">
-                    {# TODO #}
-                    <div class="alert alert-danger" role="alert">
-                        This is not yet implemented
-                    </div>
                     {{ form.subset_region|attr:"class:form-control" }}
                 </div>
             </div>
@@ -162,6 +118,9 @@
 
             mymap.addControl(drawControl);
 
+            {# Hide the controls by default #}
+            $('.leaflet-draw.leaflet-control').hide();
+
             mymap.on(L.Draw.Event.CREATED, function (e) {
                 var type = e.layerType,
                     layer = e.layer;
@@ -178,60 +137,24 @@
 
             function subset_manually() {
                 // Show the date-selection and draw controls
-                $('#date_selection').collapse('show');
                 $('.leaflet-draw.leaflet-control').show();
 
                 // Clear the existing layers (any existing JSON layers can't be edited anyway)
                 editableLayers.clearLayers();
 
                 // Hide the other options
-                $('#subset_by_dataset').collapse('hide');
                 $('#subset_by_region').collapse('hide');
-
-                // Reset the other dropdowns
-                $('#id_subset_region').find('option').prop('selected', function() {
-                    return this.defaultSelected;
-                });
-                $('#id_subset_dataset').find('option').prop('selected', function() {
-                    return this.defaultSelected;
-                });
-            }
-
-            function subset_by_dataset() {
-                // Hide the date selection and draw control
-                $('#date_selection').collapse('hide');
-                $('.leaflet-draw.leaflet-control').hide();
-
-                // Clear the existing layers
-                editableLayers.clearLayers();
-
-                // Show the dataset selection box
-                $('#subset_by_dataset').collapse('show');
-                // Hide the region selection box
-                $('#subset_by_region').collapse('hide');
-
-                // Reset the region dropdown
-                $('#id_subset_region').find('option').prop('selected', function() {
-                    return this.defaultSelected;
-                });
             }
 
             function subset_by_region() {
-                // Show date selection
-                $('#date_selection').collapse('show');
 
                 // Hide the draw controls and clear the layers
                 $('.leaflet-draw.leaflet-control').hide();
+
                 editableLayers.clearLayers();
 
-                // Hide the dataset panel and show the region one
-                $('#subset_by_dataset').collapse('hide');
+                // Show the region panel
                 $('#subset_by_region').collapse('show');
-
-                // Reset the dataset dropdown
-                $('#id_subset_dataset').find('option').prop('selected', function() {
-                    return this.defaultSelected;
-                });
 
             }
 
@@ -248,48 +171,17 @@
                 return true;
             });
 
-            {#  Script to update the dataset box based on changes to the measurement box  #}
+            {#  Script to update the map box based on changes to the region dropbox  #}
             $(function () {
-                $('#id_measurement').change(function () {
-                    $.get("../api/datasets/", {format: "json", measurement_type: $(this).val()},
-                        function (json) {
-                            data_to_select(json, '#id_dataset');
-                        },
-                        "json");
-                });
-            });
-
-            {#  Script to update the map box based on changes to the dataset box  #}
-            $(function () {
-                $('#id_dataset').change(function () {
-                    // Clear the existing layers
-                    regionLayer.clearLayers();
-                    // Fetch the selected datasets
-                    var datasets = $('#id_dataset').find(':selected');
-                    if (datasets.length > 0) {
-                        // For each dataset fetch the data geometry (which is already GeoJSON) then add the layer
-                        datasets.each(function (i, selected) {
-                            $.get("../api/datasets/" + selected.value,
-                                function (json) {
-                                    L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(regionLayer)
-                                },
-                                "json");
-                        });
-                    }
-                });
-            });
-
-            {#  Script to update the map box based on changes to the SUBSET dataset box  #}
-            $(function () {
-                $('#id_subset_dataset').change(function () {
+                $('#id_subset_region').change(function () {
                     // Clear the existing layers
                     editableLayers.clearLayers();
                     // Fetch the selected datasets
-                    var datasets = $('#id_subset_dataset').find(':selected');
-                    if (datasets.length > 0) {
-                        // For each dataset fetch the data geometry (which is already GeoJSON) then add the layer
-                        datasets.each(function (i, selected) {
-                            $.get("../api/datasets/" + selected.value,
+                    var regions = $('#id_subset_region').find(':selected');
+                    if (regions.length > 0) {
+                        // For each regions fetch the data geometry (which is already GeoJSON) then add the layer
+                        regions.each(function (i, selected) {
+                            $.get("../api/regions/" + selected.value,
                                 function (json) {
                                     editableLayers.addLayer(L.geoJSON(json.spatial_extent))
                                 },

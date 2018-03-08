@@ -8,7 +8,9 @@ from .models import *
 default_admin = admin.OSMGeoAdmin
 
 # Use the Open-Street map admin page
-admin.site.register(Dataset, default_admin)
 admin.site.register(Measurement, admin.ModelAdmin)
 admin.site.register(MeasurementVariable, admin.ModelAdmin)
 admin.site.register(MeasurementFile, default_admin)
+admin.site.register(Region, default_admin)
+admin.site.register(CIS_Job, admin.ModelAdmin)
+admin.site.register(AggregationResult, default_admin)

@@ -4,11 +4,11 @@
 # Wait for the DB to be up...
 sleep 10
 
-python manage.py migrate                  # Apply database migrations
-if [ "$DEBUG" = "True" ]; then
-  python manage.py loaddata test_fixtures.json  # Load in some test data
-fi
-python manage.py collectstatic --noinput  # Collect static files
+#python manage.py migrate                  # Apply database migrations
+#if [ "$DEBUG" = "True" ]; then
+#  python manage.py loaddata test_fixtures.json  # Load in some test data
+#fi
+#python manage.py collectstatic --noinput  # Collect static files
 
 # Prepare log files and start outputting logs to stdout
 touch /cis-esp/logs/gunicorn.log

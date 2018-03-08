@@ -8,8 +8,8 @@ from rest_framework.routers import DefaultRouter
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
-router.register(r'campaign', datasets.CampaignViewSet)
-router.register(r'datasets', datasets.DatasetViewSet)
+router.register(r'regions', datasets.RegionViewSet)
+router.register(r'results', datasets.AggregationResultViewSet)
 router.register(r'measurements', datasets.MeasurementViewSet)
 router.register(r'measurement-files', datasets.MeasurementFileViewSet)
 
