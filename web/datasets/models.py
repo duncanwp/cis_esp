@@ -123,6 +123,9 @@ class Region(models.Model):
     # String describing the CIS lat/lon extent (if applicable)
     cis_extent = models.CharField(max_length=250)
 
+    def __str__(self):
+        return "{}".format(self.name)
+
 
 class AggregationResult(models.Model):
     # Protect datasets with associated jobs
