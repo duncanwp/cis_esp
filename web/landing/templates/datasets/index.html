@@ -36,12 +36,10 @@
 
         <script>
             {# Plotly js           #}
-            {# TODO - this works for one line but doesn't add data if some is existing #}
             function articleChart(times, aods, title){
                 var data = [{
                     x: times,
                     y: aods,
-                    name: title,
                     type: 'scatter',
                     orientation: 'h',
                     marker: {
@@ -49,7 +47,7 @@
                     },
                 }];
                 var layout = {
-                      showlegend: true,
+                      title: title,
                       xaxis: {
                         title: 'Time'
                       },
@@ -60,7 +58,7 @@
                         l: 50,
                         r: 50,
                         b: 30,
-                        t: 5,
+                        t: 30,
                         pad: 4
                       },
                 };
