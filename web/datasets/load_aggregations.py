@@ -147,6 +147,7 @@ def load_aggregations():
         c=iris.load_cube("/Users/watson-parris/Local Data/"+city+"_time_series.nc",
                          "Combined Dark Target, Deep Blue AOT at 0.55 micron for land and ocean.")[0,0,:]
 
+        # Remove data (and times) where the values are NaN since these can't be safely encoded to JSON
         c = c[~c.data.mask]
 
         times = c.coord('time').units.num2date(c.coord('time').points).astype(str).tolist()
