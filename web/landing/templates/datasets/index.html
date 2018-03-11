@@ -33,62 +33,23 @@
               <div id="plotid" style="max-height:300px;max-width:1025px" class="responsive-plot"></div>
             </div>
 
-        <script type="text/javascript">
-            var mymap = L.map('mapid').setView([20, 0], 1.5);
-
-            L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-                        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-                        maxZoom: 5,
-                        noWrap: true,
-                        id: 'mapbox.satellite',
-                        accessToken: 'pk.eyJ1IjoiZHVuY2Fud3AiLCJhIjoiY2l3d2F2eHRkMDBsZjJ6cHJheWxhbDNtMyJ9.PzUwtNYFXI0CnqG6GHFMhw'
-                    }).addTo(mymap);
-
-            var originalDataStyle = {
-                'color': "#ff7800",
-                'weight': 1
-            };
-
-            var datasetLayer = new L.FeatureGroup();
-            mymap.addLayer(datasetLayer);
-
-            var fileLayer = new L.FeatureGroup();
-            mymap.addLayer(fileLayer);
-
-        </script>
 
         <script>
             {# Plotly js           #}
-            var endpoint = "../api/measurement-files"
-            var articleData = articleLabels = []
-
-            $.ajax({
-                method: "GET",
-                url: endpoint,
-                success: function(data){
-                    articleLabels = data.article_labels
-                    articleData = data.article_data
-                    articleChart()
-                    transcriptChart()
-                // console.log(data)
-                },
-                error: function(error_data){
-                    console.log("error")
-                    console.log(error_data)
-                },
-            })
-
-            function articleChart(){
+            {# TODO - this works for one line but doesn't add data if some is existing #}
+            function articleChart(times, aods, title){
                 var data = [{
-                    x: articleData,
-                    y: articleLabels,
-                    type: 'bar',
+                    x: times,
+                    y: aods,
+                    name: title,
+                    type: 'scatter',
                     orientation: 'h',
                     marker: {
                         color: '#23b7e5',
                     },
                 }];
                 var layout = {
+                      showlegend: true,
                       xaxis: {
                         title: 'Time'
                       },
@@ -106,6 +67,76 @@
 
                 Plotly.newPlot('plotid', data, layout);
             }
+        </script>
+
+        <script type="text/javascript">
+            var mymap = L.map('mapid').setView([20, 0], 1.5);
+
+            L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+                        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                        maxZoom: 5,
+                        noWrap: true,
+                        id: 'mapbox.satellite',
+                        accessToken: 'pk.eyJ1IjoiZHVuY2Fud3AiLCJhIjoiY2l3d2F2eHRkMDBsZjJ6cHJheWxhbDNtMyJ9.PzUwtNYFXI0CnqG6GHFMhw'
+                    }).addTo(mymap);
+
+            var originalDataStyle = {
+                'color': "#ff7800",
+                'weight': 1
+            };
+
+            var fileLayer = new L.FeatureGroup();
+            mymap.addLayer(fileLayer);
+
+                            // Add an object to save markers
+                var markers = {};
+
+            {#Create an empty chart #}
+            articleChart([], []);
+
+            {#  Add all the regions to the map  #}
+            // Fetch all datasets
+            $.get("../api/aggregations",
+            function (json) {
+
+                // Loop through the data
+                for (var i = 0; i < json.results.length; i++) {
+                  var res = json.results[i]
+                  console.log("Got result "+ res.id)
+
+                  // Create and save a reference to each marker
+                  marker = L.geoJSON(res.spatial_extent, {style: originalDataStyle}).addTo(fileLayer).on('click',
+                      onClick);
+
+                  markers[marker._leaflet_id] = res.id;
+                  console.log("Added point "+ res.id);
+                }
+            },
+            "json");
+
+        </script>
+
+        <script>
+            function onClick(e){
+                var res = markers[e.target._leaflet_id];
+
+                var endpoint = "../api/aggregations/" + res;
+
+                $.ajax({
+                    method: "GET",
+                    url: endpoint,
+                    success: function(data){
+                        times = data.data_x;
+                        aods = data.data_y;
+                        articleChart(times, aods, data.region_name)
+                    },
+                    error: function(error_data){
+                        console.log("error");
+                        console.log(error_data);
+                    },
+                })
+            }
+
         </script>
 
         <script>
@@ -134,30 +165,6 @@
             })();
         </script>
 
-
-        <script type="text/javascript">
-
-            {#  Script to update the map box based on changes to the measurement-file box  #}
-            $(function () {
-                $('#id_measurement_files').change(function () {
-                    // Clear the existing layers
-                    fileLayer.clearLayers();
-                    // Fetch the selected datasets
-                    var datasets = $('#id_measurement_files').find(':selected');
-                    if( datasets.length > 0) {
-                        // For each dataset fetch the data geometry (which is already GeoJSON) then add the layer
-                        datasets.each(function (i, selected) {
-                            $.get("../api/measurement-files/"+selected.value,
-                            function (json) {
-                                L.geoJSON(json.spatial_extent, {style: originalDataStyle}).addTo(fileLayer)
-                            },
-                            "json");
-                        });
-                    }
-                });
-            });
-
-        </script>
     </form>
 
 {% endblock %}

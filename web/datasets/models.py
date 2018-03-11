@@ -90,7 +90,7 @@ class CIS_Job(models.Model):
     type = models.CharField(max_length=1, choices=JOB_TYPE_CHOICES)
 
     # Command arguments
-    arguments = JSONField()
+    # arguments = JSONField()
 
     # Job status - this should reflect the ARC-CE statuses
     PENDING = 'P'
@@ -129,7 +129,11 @@ class Region(models.Model):
 
 class AggregationResult(models.Model):
     # Protect datasets with associated jobs
+    from django.contrib.postgres.fields import ArrayField
+
     job = models.ForeignKey(CIS_Job, on_delete=models.PROTECT, related_name="cis_job")
     region = models.ForeignKey(Region, on_delete=models.PROTECT, related_name="region")
-    data_x = models.FloatField()
-    data_y = models.FloatField()
+
+    # TODO - In the real app this should probably be an OpenDAP/THREDDS end point
+    data_x = ArrayField(models.CharField(max_length=19))
+    data_y = ArrayField(models.FloatField())

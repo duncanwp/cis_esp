@@ -2,12 +2,28 @@
 Searilizers of all the model types for API usage
 """
 from rest_framework import serializers
-from .models import Measurement, MeasurementFile, Region
+from .models import Measurement, MeasurementFile, Region, AggregationResult
 import json
 
 
-class RegionSerializer(serializers.ModelSerializer):
+class AggregationResultSerializer(serializers.ModelSerializer):
+    spatial_extent = serializers.SerializerMethodField()
+    region_name = serializers.SerializerMethodField()
 
+    class Meta:
+        model = AggregationResult
+        fields = '__all__'
+
+    def get_spatial_extent(self, obj):
+        # Get the GeoJSON for this field directly - rest_framework_gis doesn't seem to do GeometryCollections properly
+        # Cast the resulting json to a json object so that the serializer doesn't escape it
+        return json.loads(obj.region.spatial_extent.json) if obj.region.spatial_extent is not None else None
+
+    def get_region_name(self, obj):
+        return obj.region.name
+
+
+class RegionSerializer(serializers.ModelSerializer):
     spatial_extent = serializers.SerializerMethodField()
 
     class Meta:

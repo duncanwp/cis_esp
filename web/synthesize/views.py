@@ -33,7 +33,7 @@ def index(request, template_name='synthesize/index.html'):
                 filter(measurement_type__measurement_type=form.cleaned_data['measurement']).all()
 
             # redirect to a new URL:
-            messages.add_message(request, messages.SUCCESS, 'cis aggregate {extent} {vars}:{files}'.format(extent=cis_extent, vars=','.join(variables), files=','.join(files)))
+            messages.add_message(request, messages.SUCCESS, 'cis aggregate {vars}:{files} {extent}'.format(extent=cis_extent, vars=','.join(variables), files=','.join(files)))
             # TODO - create a CIS_Job
         else:
             messages.add_message(request, messages.ERROR, 'No matching files')

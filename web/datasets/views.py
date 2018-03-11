@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from .models import Measurement, MeasurementFile, Region, AggregationResult
 from .forms import DataSelection
-from .serializers import MeasurementSerializer, MeasurementFileSerializer, RegionSerializer
+from .serializers import MeasurementSerializer, MeasurementFileSerializer, RegionSerializer, AggregationResultSerializer
 from .filters import MeasurementFileFilter
 
 
@@ -11,6 +11,7 @@ class AggregationResultViewSet(viewsets.ReadOnlyModelViewSet):
     This viewset automatically provides `list` and `detail` actions.
     """
     queryset = AggregationResult.objects.all()
+    serializer_class = AggregationResultSerializer
 
 
 class RegionViewSet(viewsets.ReadOnlyModelViewSet):
